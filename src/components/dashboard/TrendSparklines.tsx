@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { UtensilsCrossed, Car, Zap, ShoppingBag } from "lucide-react";
 
@@ -36,31 +37,86 @@ const categories = [
   },
 ];
 
-const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
+const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) => {
+  const w = 120;
+  const h = 32;
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
-  const w = 100;
-  const h = 28;
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`)
-    .join(" ");
+  const pathRef = useRef<SVGPathElement>(null);
+  const [length, setLength] = useState(0);
+
+  // Build a smooth path with sharp peaks like a heartbeat
+  const points = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: h - ((v - min) / range) * (h - 6) - 3,
+  }));
+
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const cpx = (prev.x + curr.x) / 2;
+    d += ` C ${cpx},${prev.y} ${cpx},${curr.y} ${curr.x},${curr.y}`;
+  }
+
+  useEffect(() => {
+    if (pathRef.current) {
+      setLength(pathRef.current.getTotalLength());
+    }
+  }, []);
 
   return (
-    <svg width={w} height={h} className="flex-shrink-0 opacity-80">
+    <svg width={w} height={h} className="flex-shrink-0">
       <defs>
-        <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="1" />
+        <linearGradient id={`hb-${color.replace("#", "")}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+          <stop offset="50%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.4" />
         </linearGradient>
+        <filter id={`glow-${color.replace("#", "")}`}>
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
-      <polyline
-        points={points}
+      {/* Faint background path */}
+      <path d={d} fill="none" stroke={color} strokeWidth="1" opacity="0.15" />
+      {/* Animated heartbeat path */}
+      <motion.path
+        ref={pathRef}
+        d={d}
         fill="none"
-        stroke={`url(#grad-${color.replace("#", "")})`}
+        stroke={`url(#hb-${color.replace("#", "")})`}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        filter={`url(#glow-${color.replace("#", "")})`}
+        initial={{ strokeDasharray: length || 300, strokeDashoffset: length || 300 }}
+        animate={{
+          strokeDashoffset: [length || 300, 0, 0, length || 300],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+          times: [0, 0.4, 0.7, 1],
+        }}
+      />
+      {/* Pulsing dot at the latest data point */}
+      <motion.circle
+        cx={points[points.length - 1].x}
+        cy={points[points.length - 1].y}
+        r="3"
+        fill={color}
+        animate={{
+          r: [2.5, 4, 2.5],
+          opacity: [0.8, 1, 0.8],
+        }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        filter={`url(#glow-${color.replace("#", "")})`}
       />
     </svg>
   );
@@ -80,7 +136,7 @@ const TrendSparklines = () => (
     <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
       8-Week Trends
     </h3>
-    <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-4">
       {categories.map((c, i) => (
         <motion.div
           key={c.name}
@@ -91,14 +147,19 @@ const TrendSparklines = () => (
           custom={i}
           whileHover={{ x: 4, transition: { duration: 0.2 } }}
         >
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-shadow duration-300 group-hover:shadow-[0_0_12px_rgba(34,197,94,0.2)]"
+          <motion.div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: `${c.color}15` }}
+            whileHover={{
+              boxShadow: `0 0 14px ${c.color}40`,
+              scale: 1.1,
+            }}
+            transition={{ duration: 0.2 }}
           >
             <c.icon size={13} style={{ color: c.color }} />
-          </div>
+          </motion.div>
           <span className="text-xs text-foreground/60 w-16 flex-shrink-0 font-medium">{c.name}</span>
-          <Sparkline data={c.data} color={c.color} />
+          <HeartbeatSparkline data={c.data} color={c.color} />
           <span className="font-mono text-xs text-foreground/80 w-12 text-right flex-shrink-0">
             {c.value}
           </span>

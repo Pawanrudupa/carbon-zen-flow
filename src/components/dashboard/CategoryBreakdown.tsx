@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const segments = [
   { label: "Food", value: 124, color: "#22C55E", pct: 40 },
@@ -24,9 +24,16 @@ const CategoryBreakdown = () => {
         Category Breakdown
       </h3>
       <div className="flex items-center justify-center flex-1 gap-6">
-        {/* Chart */}
+        {/* Rotating ring chart */}
         <div className="relative">
-          <svg width="180" height="180" viewBox="0 0 180 180">
+          <motion.svg
+            width="180"
+            height="180"
+            viewBox="0 0 180 180"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            style={{ originX: "50%", originY: "50%" }}
+          >
             {segments.map((seg, i) => {
               const dashLen = (seg.pct / 100) * circumference;
               const gap = circumference - dashLen;
@@ -47,10 +54,13 @@ const CategoryBreakdown = () => {
                   style={{
                     transform: `rotate(-90deg)`,
                     transformOrigin: `${cx}px ${cy}px`,
+                    filter: isHovered ? `drop-shadow(0 0 8px ${seg.color})` : "none",
                   }}
+                  initial={{ strokeDashoffset: circumference - currentOffset }}
                   animate={{
-                    opacity: hovered !== null && !isHovered ? 0.3 : 1,
+                    opacity: hovered !== null && !isHovered ? 0.25 : 1,
                     strokeWidth: isHovered ? 18 : 14,
+                    strokeDashoffset: -currentOffset,
                   }}
                   transition={{ duration: 0.3 }}
                   onMouseEnter={() => setHovered(i)}
@@ -59,13 +69,16 @@ const CategoryBreakdown = () => {
                 />
               );
             })}
-            <text x={cx} y={cy - 4} textAnchor="middle" className="fill-foreground font-mono text-lg font-bold">
+          </motion.svg>
+          {/* Center text counter-rotates to stay readable */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="fill-foreground font-mono text-lg font-bold text-foreground">
               {hovered !== null ? segments[hovered].value : total}
-            </text>
-            <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground font-mono text-[9px]">
+            </span>
+            <span className="fill-muted-foreground font-mono text-[9px] text-muted-foreground">
               {hovered !== null ? segments[hovered].label : "kg total"}
-            </text>
-          </svg>
+            </span>
+          </div>
         </div>
 
         {/* Legend */}
@@ -80,7 +93,15 @@ const CategoryBreakdown = () => {
               whileHover={{ x: 3 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+              <motion.div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: seg.color }}
+                animate={{
+                  scale: hovered === i ? [1, 1.4, 1] : 1,
+                  boxShadow: hovered === i ? `0 0 8px ${seg.color}` : "none",
+                }}
+                transition={{ duration: 0.6, repeat: hovered === i ? Infinity : 0 }}
+              />
               <span className="text-muted-foreground/70 w-16">{seg.label}</span>
               <span className="font-mono text-foreground/60">{seg.value}</span>
             </motion.div>

@@ -32,7 +32,7 @@ const cardVariant = {
 };
 
 const AIInsightPanel = () => (
-  <div className="glass-card rounded-xl p-5 h-full flex flex-col">
+  <div className="glass-card rounded-xl p-5 flex flex-col">
     <div className="flex items-center gap-2 mb-4">
       <motion.div
         animate={{ rotate: [0, 15, -15, 0] }}
@@ -47,11 +47,12 @@ const AIInsightPanel = () => (
         transition={{ duration: 2, repeat: Infinity }}
       />
     </div>
-    <div className="flex-1 flex flex-col gap-2.5">
+    {/* Horizontal layout for full-width row */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
       {insights.map((ins, i) => (
         <motion.div
           key={i}
-          className="glass-card rounded-lg p-3 flex-1 group hover:border-primary/20 transition-colors"
+          className="glass-card rounded-lg p-4 group hover:border-primary/20 transition-colors"
           variants={cardVariant}
           initial="hidden"
           animate="show"
@@ -61,17 +62,15 @@ const AIInsightPanel = () => (
           <span className={`font-mono text-[9px] uppercase tracking-[0.15em] ${ins.color} ${ins.bg} px-1.5 py-0.5 rounded`}>
             {ins.type}
           </span>
-          <p className="text-foreground/60 text-[11px] mt-1.5 leading-relaxed">{ins.text}</p>
+          <p className="text-foreground/60 text-[11px] mt-2 leading-relaxed">{ins.text}</p>
         </motion.div>
       ))}
     </div>
-    <div className="mt-3">
-      <input
-        type="text"
-        placeholder="Ask your data anything…"
-        className="w-full px-3 py-2 rounded-lg bg-input border border-primary/10 text-foreground text-[11px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-colors"
-      />
-    </div>
+    <input
+      type="text"
+      placeholder="Ask your data anything…"
+      className="w-full px-3 py-2 rounded-lg bg-input border border-primary/10 text-foreground text-[11px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-colors"
+    />
   </div>
 );
 

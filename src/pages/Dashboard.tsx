@@ -36,7 +36,7 @@ const Dashboard = () => {
           initial="hidden"
           animate="show"
         >
-          {/* Hero row — CarbonOrb dominates */}
+          {/* Row 1 — CarbonOrb + CategoryBreakdown + Challenges */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-6">
             <motion.div variants={fadeSlide} className="lg:col-span-5">
               <CarbonOrb />
@@ -45,24 +45,26 @@ const Dashboard = () => {
               <CategoryBreakdown />
             </motion.div>
             <motion.div variants={fadeSlide} className="lg:col-span-3">
-              <TrendSparklines />
-            </motion.div>
-          </div>
-
-          {/* Content row — Recent Entries is the star */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-6">
-            <motion.div variants={fadeSlide} className="lg:col-span-6">
-              <LogTimeline />
-            </motion.div>
-            <motion.div variants={fadeSlide} className="lg:col-span-3">
-              <AIInsightPanel />
-            </motion.div>
-            <motion.div variants={fadeSlide} className="lg:col-span-3">
               <ChallengesPanel />
             </motion.div>
           </div>
 
-          {/* Bottom — heatmap */}
+          {/* Row 2 — Trends + Recent Entries */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-6">
+            <motion.div variants={fadeSlide} className="lg:col-span-5">
+              <TrendSparklines />
+            </motion.div>
+            <motion.div variants={fadeSlide} className="lg:col-span-7">
+              <LogTimeline />
+            </motion.div>
+          </div>
+
+          {/* Row 3 — AI Insights full width */}
+          <motion.div variants={fadeSlide} className="mb-6">
+            <AIInsightPanel />
+          </motion.div>
+
+          {/* Row 4 — Heatmap */}
           <motion.div variants={fadeSlide}>
             <MonthlyHeatmap />
           </motion.div>
