@@ -29,7 +29,7 @@ const entryVariant = {
   show: (i: number) => ({
     opacity: 1,
     x: 0,
-    transition: { delay: 0.15 + i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay: 0.15 + i * 0.08, duration: 0.5, ease: "easeOut" as const },
   }),
 };
 

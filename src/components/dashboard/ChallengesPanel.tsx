@@ -40,7 +40,7 @@ const ChallengesPanel = () => (
               className="h-full rounded-full bg-primary"
               initial={{ width: 0 }}
               animate={{ width: `${c.progress * 100}%` }}
-              transition={{ delay: 0.6 + i * 0.15, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.6 + i * 0.15, duration: 0.8, ease: "easeOut" }}
               style={{ boxShadow: "0 0 8px rgba(34,197,94,0.3)" }}
             />
           </div>

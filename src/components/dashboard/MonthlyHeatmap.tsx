@@ -37,7 +37,7 @@ const MonthlyHeatmap = () => {
             transition={{
               delay: i * 0.02,
               duration: 0.4,
-              ease: [0.22, 1, 0.36, 1],
+              ease: "easeOut",
             }}
             whileHover={{ scale: 1.25, transition: { duration: 0.15 } }}
             onMouseEnter={() => setHoveredDay(i)}
