@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const segments = [
   { label: "Food", value: 124, color: "#22C55E", pct: 40 },
@@ -11,67 +12,80 @@ const segments = [
 const CategoryBreakdown = () => {
   const [hovered, setHovered] = useState<number | null>(null);
   const total = segments.reduce((s, seg) => s + seg.value, 0);
-  const r = 80;
-  const cx = 100;
-  const cy = 100;
+  const r = 72;
+  const cx = 90;
+  const cy = 90;
   const circumference = 2 * Math.PI * r;
   let offset = 0;
 
   return (
-    <div className="glass-card rounded-xl p-5 h-full flex flex-col items-center justify-center">
-      <h3 className="font-mono text-xs text-muted-foreground/60 uppercase tracking-widest mb-4 self-start">
+    <div className="glass-card rounded-xl p-5 h-full flex flex-col">
+      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-3">
         Category Breakdown
       </h3>
-      <svg width="200" height="200" viewBox="0 0 200 200" className="mb-4">
-        {segments.map((seg, i) => {
-          const dashLen = (seg.pct / 100) * circumference;
-          const gap = circumference - dashLen;
-          const currentOffset = offset;
-          offset += dashLen;
-          const isHovered = hovered === i;
-          return (
-            <circle
+      <div className="flex items-center justify-center flex-1 gap-6">
+        {/* Chart */}
+        <div className="relative">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            {segments.map((seg, i) => {
+              const dashLen = (seg.pct / 100) * circumference;
+              const gap = circumference - dashLen;
+              const currentOffset = offset;
+              offset += dashLen;
+              const isHovered = hovered === i;
+              return (
+                <motion.circle
+                  key={i}
+                  cx={cx}
+                  cy={cy}
+                  r={r}
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth={isHovered ? 18 : 14}
+                  strokeDasharray={`${dashLen} ${gap}`}
+                  strokeDashoffset={-currentOffset}
+                  style={{
+                    transform: `rotate(-90deg)`,
+                    transformOrigin: `${cx}px ${cy}px`,
+                  }}
+                  animate={{
+                    opacity: hovered !== null && !isHovered ? 0.3 : 1,
+                    strokeWidth: isHovered ? 18 : 14,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
+                  className="cursor-pointer"
+                />
+              );
+            })}
+            <text x={cx} y={cy - 4} textAnchor="middle" className="fill-foreground font-mono text-lg font-bold">
+              {hovered !== null ? segments[hovered].value : total}
+            </text>
+            <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground font-mono text-[9px]">
+              {hovered !== null ? segments[hovered].label : "kg total"}
+            </text>
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-col gap-2">
+          {segments.map((seg, i) => (
+            <motion.div
               key={i}
-              cx={cx}
-              cy={cy}
-              r={r}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth={isHovered ? 20 : 16}
-              strokeDasharray={`${dashLen} ${gap}`}
-              strokeDashoffset={-currentOffset}
-              className="transition-all duration-300 origin-center"
-              style={{
-                transform: `rotate(-90deg)`,
-                transformOrigin: `${cx}px ${cy}px`,
-                opacity: hovered !== null && !isHovered ? 0.4 : 1,
-                animation: `draw-in 1s ease-out ${i * 0.1}s both`,
-              }}
+              className="flex items-center gap-2 text-[11px] cursor-pointer"
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
-            />
-          );
-        })}
-        <text x={cx} y={cy - 6} textAnchor="middle" className="fill-foreground font-mono text-xl font-bold">
-          {hovered !== null ? segments[hovered].value : total}
-        </text>
-        <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground font-mono text-[10px]">
-          {hovered !== null ? segments[hovered].label : "kg total"}
-        </text>
-      </svg>
-      <div className="flex flex-wrap gap-3 justify-center">
-        {segments.map((seg, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-1.5 text-xs cursor-pointer"
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seg.color }} />
-            <span className="text-muted-foreground">{seg.label}</span>
-            <span className="font-mono text-foreground/70">{seg.value}</span>
-          </div>
-        ))}
+              animate={{ opacity: hovered !== null && hovered !== i ? 0.4 : 1 }}
+              whileHover={{ x: 3 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+              <span className="text-muted-foreground/70 w-16">{seg.label}</span>
+              <span className="font-mono text-foreground/60">{seg.value}</span>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );

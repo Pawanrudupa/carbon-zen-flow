@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import CarbonOrb from "@/components/dashboard/CarbonOrb";
@@ -8,42 +9,64 @@ import LogTimeline from "@/components/dashboard/LogTimeline";
 import ChallengesPanel from "@/components/dashboard/ChallengesPanel";
 import MonthlyHeatmap from "@/components/dashboard/MonthlyHeatmap";
 
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+};
+
+const fadeSlide = {
+  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <DashboardSidebar />
       <div className="ml-16 min-h-screen flex flex-col">
         <DashboardHeader />
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {/* Top row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-4 md:mb-5">
-            <div className="md:col-span-1">
+        <motion.main
+          className="flex-1 p-5 md:p-8 overflow-auto"
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+        >
+          {/* Hero row — CarbonOrb dominates */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-6">
+            <motion.div variants={fadeSlide} className="lg:col-span-5">
               <CarbonOrb />
-            </div>
-            <div className="md:col-span-1">
-              <TrendSparklines />
-            </div>
-            <div className="md:col-span-1">
-              <AIInsightPanel />
-            </div>
-          </div>
-
-          {/* Middle row */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 mb-4 md:mb-5">
-            <div className="md:col-span-4">
+            </motion.div>
+            <motion.div variants={fadeSlide} className="lg:col-span-4">
               <CategoryBreakdown />
-            </div>
-            <div className="md:col-span-5">
-              <LogTimeline />
-            </div>
-            <div className="md:col-span-3">
-              <ChallengesPanel />
-            </div>
+            </motion.div>
+            <motion.div variants={fadeSlide} className="lg:col-span-3">
+              <TrendSparklines />
+            </motion.div>
           </div>
 
-          {/* Bottom row */}
-          <MonthlyHeatmap />
-        </main>
+          {/* Content row — Recent Entries is the star */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-6">
+            <motion.div variants={fadeSlide} className="lg:col-span-6">
+              <LogTimeline />
+            </motion.div>
+            <motion.div variants={fadeSlide} className="lg:col-span-3">
+              <AIInsightPanel />
+            </motion.div>
+            <motion.div variants={fadeSlide} className="lg:col-span-3">
+              <ChallengesPanel />
+            </motion.div>
+          </div>
+
+          {/* Bottom — heatmap */}
+          <motion.div variants={fadeSlide}>
+            <MonthlyHeatmap />
+          </motion.div>
+        </motion.main>
       </div>
     </div>
   );
