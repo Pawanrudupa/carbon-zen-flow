@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import LogEntry from "./pages/LogEntry.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Analytics from "./pages/Analytics.tsx";
+import Challenges from "./pages/Challenges.tsx";
 
 const queryClient = new QueryClient();
 
