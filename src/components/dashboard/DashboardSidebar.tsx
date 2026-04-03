@@ -15,7 +15,7 @@ import { Link, useLocation } from "react-router-dom";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: PenLine, label: "Log Entry", path: "/log" },
-  { icon: BarChart3, label: "Analytics", path: "/dashboard" },
+  { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Flame, label: "Challenges", path: "/dashboard" },
   { icon: Users, label: "Household", path: "/dashboard" },
   { icon: FileText, label: "Reports", path: "/dashboard" },
