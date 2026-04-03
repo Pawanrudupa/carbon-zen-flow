@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import CountUp from "./CountUp";
 
 const CarbonOrb = () => {
@@ -5,54 +6,82 @@ const CarbonOrb = () => {
   const target = 400;
   const progress = (total / target) * 100;
   const color = progress < 60 ? "text-primary" : progress < 85 ? "text-chart-amber" : "text-destructive";
+  const strokeColor = progress < 60 ? "hsl(142 71% 45%)" : progress < 85 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
+  const circumference = 2 * Math.PI * 120;
 
   return (
     <div className="glass-card rounded-xl p-6 flex flex-col items-center justify-center h-full">
       <span className="font-mono text-xs text-muted-foreground/60 uppercase tracking-widest mb-4">
         This Month
       </span>
-      <div className="relative w-[240px] h-[240px] md:w-[280px] md:h-[280px] flex items-center justify-center">
-        {/* Background glow */}
-        <div className="absolute inset-0 rounded-full bg-primary/5 animate-pulse-glow" />
 
-        {/* Outer rotating ring */}
-        <svg className="absolute inset-0 w-full h-full animate-rotate-ring" viewBox="0 0 300 300">
+      <motion.div
+        className="relative w-[240px] h-[240px] md:w-[280px] md:h-[280px] flex items-center justify-center"
+        animate={{ scale: [1, 1.02, 1] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {/* Inner radial glow */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: "60%",
+            height: "60%",
+            background: `radial-gradient(circle, hsl(142 71% 45% / 0.12) 0%, transparent 70%)`,
+          }}
+        />
+
+        {/* Outer dashed rotating ring */}
+        <motion.svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 300 300"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        >
           <circle
-            cx="150" cy="150" r="140"
+            cx="150"
+            cy="150"
+            r="142"
             fill="none"
-            stroke="rgba(34,197,94,0.1)"
-            strokeWidth="2"
-            strokeDasharray="8 12"
+            stroke="hsl(142 71% 45% / 0.15)"
+            strokeWidth="1"
+            strokeDasharray="6 10"
           />
-        </svg>
+        </motion.svg>
 
-        {/* Progress ring */}
+        {/* Middle progress arc */}
         <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
           <circle
-            cx="150" cy="150" r="120"
+            cx="150"
+            cy="150"
+            r="120"
             fill="none"
-            stroke="rgba(34,197,94,0.08)"
-            strokeWidth="4"
+            stroke="hsl(142 71% 45% / 0.06)"
+            strokeWidth="3"
           />
-          <circle
-            cx="150" cy="150" r="120"
+          <motion.circle
+            cx="150"
+            cy="150"
+            r="120"
             fill="none"
-            stroke="currentColor"
-            className={color}
-            strokeWidth="4"
+            stroke={strokeColor}
+            strokeWidth="3"
             strokeLinecap="round"
-            strokeDasharray={`${(progress / 100) * 754} 754`}
-            style={{
-              transition: "stroke-dasharray 1.5s ease-out",
-            }}
+            initial={{ strokeDasharray: `0 ${circumference}` }}
+            animate={{ strokeDasharray: `${(progress / 100) * circumference} ${circumference}` }}
+            transition={{ duration: 1.8, ease: "easeOut" }}
           />
         </svg>
 
-        {/* Inner pulsing ring */}
-        <div className="absolute w-[180px] h-[180px] md:w-[210px] md:h-[210px] rounded-full border border-primary/20 animate-breathe" />
+        {/* Inner subtle ring */}
+        <motion.div
+          className="absolute rounded-full border border-primary/10"
+          style={{ width: "65%", height: "65%" }}
+          animate={{ opacity: [0.4, 0.8, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        />
 
         {/* Center content */}
-        <div className="relative z-10 flex flex-col items-center animate-breathe">
+        <div className="relative z-10 flex flex-col items-center">
           <CountUp
             end={total}
             className={`font-mono text-4xl md:text-5xl font-bold ${color}`}
@@ -60,7 +89,7 @@ const CarbonOrb = () => {
           />
           <span className="font-mono text-sm text-muted-foreground mt-1">kg CO₂</span>
         </div>
-      </div>
+      </motion.div>
 
       <div className="flex gap-3 mt-6">
         <span className="px-3 py-1.5 rounded-full glass-card text-xs font-mono text-primary">
