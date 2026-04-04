@@ -9,6 +9,7 @@ import LogEntry from "./pages/LogEntry.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Analytics from "./pages/Analytics.tsx";
 import Challenges from "./pages/Challenges.tsx";
+import Household from "./pages/Household.tsx";
 
 const queryClient = new QueryClient();
 
