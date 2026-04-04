@@ -18,7 +18,7 @@ const navItems = [
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Flame, label: "Challenges", path: "/challenges" },
   { icon: Users, label: "Household", path: "/household" },
-  { icon: FileText, label: "Reports", path: "/dashboard" },
+  { icon: FileText, label: "Reports", path: "/reports" },
   { icon: Settings, label: "Settings", path: "/dashboard" },
 ];
 
