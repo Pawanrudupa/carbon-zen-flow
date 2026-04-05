@@ -11,6 +11,7 @@ import Analytics from "./pages/Analytics.tsx";
 import Challenges from "./pages/Challenges.tsx";
 import Household from "./pages/Household.tsx";
 import Reports from "./pages/Reports.tsx";
+import Settings from "./pages/Settings.tsx";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/household" element={<Household />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
