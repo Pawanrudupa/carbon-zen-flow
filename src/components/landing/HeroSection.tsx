@@ -35,7 +35,7 @@ const HeroSection = () => {
           className="mt-8 flex flex-col sm:flex-row gap-4"
         >
           <Link
-            to="/dashboard"
+            to="/log"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-heading font-600 text-base transition-all hover:shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-105"
           >
             Start Tracking Free <ArrowRight size={18} />
