@@ -19,7 +19,7 @@ const navItems = [
   { icon: Flame, label: "Challenges", path: "/challenges" },
   { icon: Users, label: "Household", path: "/household" },
   { icon: FileText, label: "Reports", path: "/reports" },
-  { icon: Settings, label: "Settings", path: "/dashboard" },
+  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 const DashboardSidebar = () => {
