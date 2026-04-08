@@ -3,10 +3,11 @@ import CountUp from "./CountUp";
 
 const CarbonOrb = () => {
   const total = 312;
-  const target = 400;
-  const progress = (total / target) * 100;
-  const color = progress < 60 ? "text-primary" : progress < 85 ? "text-chart-amber" : "text-destructive";
-  const strokeColor = progress < 60 ? "hsl(142 71% 45%)" : progress < 85 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
+  const target = 350;
+  const ratio = total / target;
+  const progress = ratio * 100;
+  const color = ratio < 0.8 ? "text-primary" : ratio <= 1 ? "text-chart-amber" : "text-destructive";
+  const strokeColor = ratio < 0.8 ? "hsl(142 71% 45%)" : ratio <= 1 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
   const circumference = 2 * Math.PI * 120;
 
   return (
