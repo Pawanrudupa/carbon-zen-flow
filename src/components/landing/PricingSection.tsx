@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 
 const PricingSection = () => {
@@ -88,9 +89,9 @@ const PricingSection = () => {
                 </li>
               ))}
             </ul>
-            <button className="mt-8 w-full py-3 rounded-lg bg-primary text-primary-foreground font-heading font-600 transition-all hover:shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+            <Link to="/settings?section=billing" className="mt-8 w-full py-3 rounded-lg bg-primary text-primary-foreground font-heading font-600 transition-all hover:shadow-[0_0_30px_rgba(34,197,94,0.3)] block text-center">
               Start Premium
-            </button>
+            </Link>
           </motion.div>
         </div>
       </div>
