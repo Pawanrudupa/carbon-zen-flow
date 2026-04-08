@@ -63,9 +63,9 @@ const PricingSection = () => {
                 </li>
               ))}
             </ul>
-            <button className="mt-8 w-full py-3 rounded-lg border border-primary/30 text-primary font-heading font-600 transition-all hover:bg-primary/10">
+            <Link to="/log" className="mt-8 w-full py-3 rounded-lg border border-primary/30 text-primary font-heading font-600 transition-all hover:bg-primary/10 block text-center">
               Get Started
-            </button>
+            </Link>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
