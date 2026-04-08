@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import SettingsNav from "@/components/settings/SettingsNav";
 import ProfileSection from "@/components/settings/ProfileSection";
@@ -21,7 +22,16 @@ const sections: Record<string, React.FC> = {
 };
 
 const Settings = () => {
-  const [active, setActive] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const [active, setActive] = useState(() => {
+    const section = searchParams.get("section");
+    return section && sections[section] ? section : "profile";
+  });
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section && sections[section]) setActive(section);
+  }, [searchParams]);
   const Section = sections[active] ?? ProfileSection;
 
   return (
