@@ -8,9 +8,10 @@ import {
   FileText,
   Settings,
   Leaf,
-  ChevronRight,
+  LogOut,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -25,6 +26,16 @@ const navItems = [
 const DashboardSidebar = () => {
   const [expanded, setExpanded] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const displayName = user?.user_metadata?.display_name || user?.email || "U";
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <aside
@@ -64,18 +75,24 @@ const DashboardSidebar = () => {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-primary/10">
+      <div className="px-3 py-4 border-t border-primary/10 space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-primary font-heading font-700 text-xs">A</span>
+            <span className="text-primary font-heading font-700 text-xs">{initial}</span>
           </div>
           {expanded && (
             <div className="min-w-0">
-              <p className="text-xs text-foreground truncate">Alex Chen</p>
-              <p className="text-[10px] text-primary font-mono">🔥 14 day streak</p>
+              <p className="text-xs text-foreground truncate">{displayName}</p>
             </div>
           )}
         </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all w-full"
+        >
+          <LogOut size={16} className="flex-shrink-0" />
+          {expanded && <span className="whitespace-nowrap">Sign Out</span>}
+        </button>
       </div>
     </aside>
   );
