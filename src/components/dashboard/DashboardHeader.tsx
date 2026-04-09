@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, Plus, Leaf, Flame, Trophy, TrendingDown, FileText, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const quickCategories = [
   { label: "Food", emoji: "🍔" },
@@ -22,6 +23,10 @@ const DashboardHeader = () => {
   const month = new Date().toLocaleString("default", { month: "long", year: "numeric" });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  const displayName = user?.user_metadata?.display_name || user?.email || "U";
+  const initial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -61,7 +66,6 @@ const DashboardHeader = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Bell + dropdown */}
         <div ref={ref} className="relative">
           <button
             onClick={() => setOpen((prev) => !prev)}
@@ -130,7 +134,7 @@ const DashboardHeader = () => {
           On Track
         </span>
         <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-          <span className="text-primary font-heading font-700 text-xs">A</span>
+          <span className="text-primary font-heading font-700 text-xs">{initial}</span>
         </div>
       </div>
     </header>
