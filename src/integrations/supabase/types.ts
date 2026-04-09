@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      challenges: {
+        Row: {
+          category: string | null
+          description: string | null
+          duration_days: number | null
+          icon: string | null
+          id: string
+          target_co2_saving: number | null
+          title: string | null
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          duration_days?: number | null
+          icon?: string | null
+          id?: string
+          target_co2_saving?: number | null
+          title?: string | null
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          duration_days?: number | null
+          icon?: string | null
+          id?: string
+          target_co2_saving?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      entries: {
+        Row: {
+          category: string | null
+          co2_kg: number | null
+          description: string | null
+          id: string
+          logged_at: string | null
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          co2_kg?: number | null
+          description?: string | null
+          id?: string
+          logged_at?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          co2_kg?: number | null
+          description?: string | null
+          id?: string
+          logged_at?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_challenges: {
+        Row: {
+          challenge_id: string | null
+          completed_at: string | null
+          id: string
+          progress: number | null
+          started_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          id?: string
+          progress?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          id?: string
+          progress?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_challenges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
