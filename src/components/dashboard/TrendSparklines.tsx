@@ -1,41 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { UtensilsCrossed, Car, Zap, ShoppingBag } from "lucide-react";
-
-const categories = [
-  {
-    name: "Food",
-    icon: UtensilsCrossed,
-    value: 124,
-    delta: -8,
-    data: [18, 20, 15, 22, 16, 19, 14, 12],
-    color: "#22C55E",
-  },
-  {
-    name: "Transport",
-    icon: Car,
-    value: 89,
-    delta: -22,
-    data: [25, 18, 22, 12, 15, 10, 8, 11],
-    color: "#3B82F6",
-  },
-  {
-    name: "Energy",
-    icon: Zap,
-    value: 67,
-    delta: 3,
-    data: [8, 9, 8, 10, 9, 8, 9, 8],
-    color: "#F59E0B",
-  },
-  {
-    name: "Shopping",
-    icon: ShoppingBag,
-    value: 32,
-    delta: -5,
-    data: [5, 2, 8, 3, 4, 6, 2, 4],
-    color: "#A78BFA",
-  },
-];
+import SkeletonCard from "@/components/ui/SkeletonCard";
+import ErrorCard from "@/components/ui/ErrorCard";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) => {
   const w = 120;
@@ -46,7 +14,6 @@ const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) 
   const pathRef = useRef<SVGPathElement>(null);
   const [length, setLength] = useState(0);
 
-  // Build a smooth path with sharp peaks like a heartbeat
   const points = data.map((v, i) => ({
     x: (i / (data.length - 1)) * w,
     y: h - ((v - min) / range) * (h - 6) - 3,
@@ -82,9 +49,7 @@ const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) 
           </feMerge>
         </filter>
       </defs>
-      {/* Faint background path */}
       <path d={d} fill="none" stroke={color} strokeWidth="1" opacity="0.15" />
-      {/* Animated heartbeat path */}
       <motion.path
         ref={pathRef}
         d={d}
@@ -95,26 +60,15 @@ const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) 
         strokeLinejoin="round"
         filter={`url(#glow-${color.replace("#", "")})`}
         initial={{ strokeDasharray: length || 300, strokeDashoffset: length || 300 }}
-        animate={{
-          strokeDashoffset: [length || 300, 0, 0, length || 300],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut",
-          times: [0, 0.4, 0.7, 1],
-        }}
+        animate={{ strokeDashoffset: [length || 300, 0, 0, length || 300] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", times: [0, 0.4, 0.7, 1] }}
       />
-      {/* Pulsing dot at the latest data point */}
       <motion.circle
         cx={points[points.length - 1].x}
         cy={points[points.length - 1].y}
         r="3"
         fill={color}
-        animate={{
-          r: [2.5, 4, 2.5],
-          opacity: [0.8, 1, 0.8],
-        }}
+        animate={{ r: [2.5, 4, 2.5], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         filter={`url(#glow-${color.replace("#", "")})`}
       />
@@ -131,51 +85,101 @@ const rowVariant = {
   }),
 };
 
-const TrendSparklines = () => (
-  <div className="glass-card rounded-xl p-5 h-full flex flex-col justify-center">
-    <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
-      8-Week Trends
-    </h3>
-    <div className="flex flex-col gap-4">
-      {categories.map((c, i) => (
-        <motion.div
-          key={c.name}
-          className="flex items-center gap-3 group"
-          variants={rowVariant}
-          initial="hidden"
-          animate="show"
-          custom={i}
-          whileHover={{ x: 4, transition: { duration: 0.2 } }}
-        >
-          <motion.div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${c.color}15` }}
-            whileHover={{
-              boxShadow: `0 0 14px ${c.color}40`,
-              scale: 1.1,
-            }}
-            transition={{ duration: 0.2 }}
-          >
-            <c.icon size={13} style={{ color: c.color }} />
-          </motion.div>
-          <span className="text-xs text-foreground/60 w-16 flex-shrink-0 font-medium">{c.name}</span>
-          <HeartbeatSparkline data={c.data} color={c.color} />
-          <span className="font-mono text-xs text-foreground/80 w-12 text-right flex-shrink-0">
-            {c.value}
-          </span>
-          <span
-            className={`font-mono text-[10px] flex-shrink-0 px-1.5 py-0.5 rounded-md ${
-              c.delta <= 0
-                ? "text-primary bg-primary/10"
-                : "text-destructive bg-destructive/10"
-            }`}
-          >
-            {c.delta <= 0 ? "↓" : "↑"}{Math.abs(c.delta)}%
-          </span>
-        </motion.div>
-      ))}
+const CATEGORY_META = [
+  { name: "Food",      key: "food",      icon: UtensilsCrossed, color: "#22C55E" },
+  { name: "Transport", key: "transport", icon: Car,              color: "#3B82F6" },
+  { name: "Energy",    key: "energy",    icon: Zap,              color: "#F59E0B" },
+  { name: "Shopping",  key: "shopping",  icon: ShoppingBag,      color: "#A78BFA" },
+];
+
+const TrendSparklines = () => {
+  const { data: allEntries = [], isLoading, isError, refetch } = useDashboardData();
+
+  const categories = useMemo(() => {
+    const now = new Date();
+
+    const grouped: Record<string, number[]> = {
+      food:      Array(8).fill(0),
+      transport: Array(8).fill(0),
+      energy:    Array(8).fill(0),
+      shopping:  Array(8).fill(0),
+    };
+
+    allEntries.forEach((e) => {
+      const cat = e.category || "other";
+      if (!grouped[cat]) return;
+      const loggedDate = new Date(e.logged_at);
+      const daysDiff = Math.floor((now.getTime() - loggedDate.getTime()) / (1000 * 60 * 60 * 24));
+      const weekIdx = Math.min(7, Math.max(0, 7 - Math.floor(daysDiff / 7)));
+      grouped[cat][weekIdx] += (e.co2_kg || 0);
+    });
+
+    return CATEGORY_META.map((cat) => {
+      const weeklyData = grouped[cat.key];
+      const totalValue = weeklyData.reduce((sum, val) => sum + val, 0);
+      const latest = weeklyData[7];
+      const prev   = weeklyData[6];
+      let delta = 0;
+      if (prev > 0)         delta = Math.round(((latest - prev) / prev) * 100);
+      else if (latest > 0)  delta = 100;
+
+      return { ...cat, value: Math.round(totalValue), delta, data: weeklyData };
+    }).filter(r => r.value > 0);
+  }, [allEntries]);
+
+  return (
+    <div className="glass-card rounded-xl p-5 h-full flex flex-col justify-center">
+      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+        8-Week Trends
+      </h3>
+      {isLoading ? (
+        <SkeletonCard className="h-full" />
+      ) : isError ? (
+        <ErrorCard onRetry={() => refetch()} />
+      ) : categories.length === 0 ? (
+        <div className="text-center text-xs text-muted-foreground py-8">No data available</div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {categories.map((c, i) => (
+            <motion.div
+              key={c.name}
+              className="flex items-center gap-3 group"
+              variants={rowVariant}
+              initial="hidden"
+              animate="show"
+              custom={i}
+              whileHover={{ x: 4, transition: { duration: 0.2 } }}
+            >
+              <motion.div
+                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${c.color}15` }}
+                whileHover={{ boxShadow: `0 0 14px ${c.color}40`, scale: 1.1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <c.icon size={13} style={{ color: c.color }} />
+              </motion.div>
+              <span className="text-xs text-foreground/60 w-16 flex-shrink-0 font-medium">{c.name}</span>
+              <HeartbeatSparkline data={c.data} color={c.color} />
+              <span className="font-mono text-xs text-foreground/80 w-12 text-right flex-shrink-0">
+                {c.value}
+              </span>
+              <span
+                className={`font-mono text-[10px] flex-shrink-0 px-1.5 py-0.5 rounded-md ${
+                  c.delta < 0
+                    ? "text-primary bg-primary/10"
+                    : c.delta > 0
+                    ? "text-destructive bg-destructive/10"
+                    : "text-muted-foreground bg-muted/20"
+                }`}
+              >
+                {c.delta < 0 ? "↓" : c.delta > 0 ? "↑" : "−"}{Math.abs(c.delta)}%
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 export default TrendSparklines;

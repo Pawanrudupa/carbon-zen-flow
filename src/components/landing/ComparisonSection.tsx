@@ -41,8 +41,8 @@ const ComparisonSection = () => (
             </div>
           ))}
           {features.map((f, fi) => (
-            <>
-              <div key={`f-${fi}`} className="p-4 text-foreground/80 border-b border-primary/5 text-sm font-body">
+            <div key={`row-${fi}`} className="contents">
+              <div className="p-4 text-foreground/80 border-b border-primary/5 text-sm font-body">
                 {f}
               </div>
               {columns.map((c, ci) => (
@@ -59,7 +59,7 @@ const ComparisonSection = () => (
                   )}
                 </div>
               ))}
-            </>
+            </div>
           ))}
         </div>
       </div>

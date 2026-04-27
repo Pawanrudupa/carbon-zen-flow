@@ -1,16 +1,49 @@
-import { useState } from "react";
+import { useMemo } from "react";
 
 const ranges = ["This Month", "Last 3 Months", "This Year", "All Time"];
 
-const stats = [
-  { label: "Total tracked", value: "1,847 kg CO₂", bars: [60, 80, 45, 70] },
-  { label: "Best month", value: "Feb · 268 kg", bars: [90, 40, 30, 55] },
-  { label: "Avg per day", value: "10.4 kg", bars: [50, 65, 55, 48] },
-  { label: "Months logged", value: "6 months", bars: [30, 50, 70, 90] },
-];
+interface AnalyticsHeaderProps {
+  dateRange: string;
+  setDateRange: (r: string) => void;
+  entries: any[];
+}
 
-const AnalyticsHeader = () => {
-  const [selected, setSelected] = useState("Last 3 Months");
+const AnalyticsHeader = ({ dateRange, setDateRange, entries }: AnalyticsHeaderProps) => {
+  // Calculate dynamic stats
+  const totalTracked = entries.reduce((sum, e) => sum + (e.co2_kg || 0), 0);
+  
+  // Group by month to find best month and months logged
+  const byMonth = entries.reduce((acc: Record<string, number>, e) => {
+    const d = new Date(e.logged_at);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    acc[key] = (acc[key] || 0) + (e.co2_kg || 0);
+    return acc;
+  }, {});
+  
+  const monthsLogged = Object.keys(byMonth).length;
+  
+  let bestMonthStr = "None";
+  if (monthsLogged > 0) {
+    const sortedMonths = Object.entries(byMonth).sort((a, b) => a[1] - b[1]); // Ascending (lower is better for CO2?) Wait, "Best month" usually means lowest CO2, or most tracking? Usually lowest CO2 tracked if it's a full month, but if you track 0 it's 0. Let's assume highest tracked if we want to encourage logging, or lowest if we want to reduce footprint. Let's do lowest CO2 for now, but ignore 0.
+    // Actually, "Best month" in original was "Feb · 268 kg". Let's do highest tracking since it's an app for logging.
+    const best = sortedMonths[sortedMonths.length - 1];
+    if (best) {
+      const [y, m] = best[0].split("-");
+      const d = new Date(parseInt(y), parseInt(m), 1);
+      bestMonthStr = `${d.toLocaleString("default", { month: "short" })} · ${Math.round(best[1])} kg`;
+    }
+  }
+
+  // Avg per day
+  const uniqueDays = new Set(entries.map(e => e.logged_at.split("T")[0])).size;
+  const avgPerDay = uniqueDays > 0 ? (totalTracked / uniqueDays) : 0;
+
+  const stats = [
+    { label: "Total tracked", value: `${Math.round(totalTracked)} kg CO₂`, bars: [60, 80, 45, 70] },
+    { label: "Best month", value: bestMonthStr, bars: [90, 40, 30, 55] },
+    { label: "Avg per day", value: `${avgPerDay.toFixed(1)} kg`, bars: [50, 65, 55, 48] },
+    { label: "Months logged", value: `${monthsLogged} months`, bars: [30, 50, 70, 90] },
+  ];
 
   return (
     <div>
@@ -23,9 +56,9 @@ const AnalyticsHeader = () => {
           {ranges.map((r) => (
             <button
               key={r}
-              onClick={() => setSelected(r)}
+              onClick={() => setDateRange(r)}
               className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${
-                selected === r
+                dateRange === r
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
               }`}

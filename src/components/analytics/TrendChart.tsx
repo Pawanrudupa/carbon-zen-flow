@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ComposedChart,
   Area,
@@ -11,14 +11,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const allData = [
-  { month: "Nov", total: 380, food: 150, transport: 110, energy: 80, shopping: 40 },
-  { month: "Dec", total: 410, food: 170, transport: 120, energy: 85, shopping: 35 },
-  { month: "Jan", total: 352, food: 130, transport: 100, energy: 82, shopping: 40 },
-  { month: "Feb", total: 268, food: 100, transport: 75, energy: 63, shopping: 30 },
-  { month: "Mar", total: 380, food: 155, transport: 105, energy: 80, shopping: 40 },
-  { month: "Apr", total: 312, food: 120, transport: 90, energy: 70, shopping: 32 },
-];
+interface TrendChartProps {
+  entries: any[];
+  dateRange: string;
+}
 
 const categories = [
   { key: "All", color: "#22C55E" },
@@ -43,8 +39,45 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const TrendChart = () => {
+const TrendChart = ({ entries, dateRange }: TrendChartProps) => {
   const [activeCategory, setActiveCategory] = useState("All");
+
+  const chartData = useMemo(() => {
+    const groups: Record<string, any> = {};
+    entries.forEach((e) => {
+      const d = new Date(e.logged_at);
+      // Group by day if "This Month", else by month
+      const isDaily = dateRange === "This Month";
+      const key = isDaily
+        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      
+      if (!groups[key]) {
+        groups[key] = { 
+          label: isDaily ? `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}` : d.toLocaleString("en-US", { month: "short" }), 
+          total: 0, food: 0, transport: 0, energy: 0, shopping: 0, sortKey: key 
+        };
+      }
+      
+      const cat = e.category || "other";
+      const val = e.co2_kg || 0;
+      groups[key].total += val;
+      if (groups[key][cat] !== undefined) {
+        groups[key][cat] += val;
+      }
+    });
+
+    return Object.values(groups)
+      .sort((a: any, b: any) => a.sortKey.localeCompare(b.sortKey))
+      .map((g: any) => ({
+        month: g.label,
+        total: Math.round(g.total),
+        food: Math.round(g.food),
+        transport: Math.round(g.transport),
+        energy: Math.round(g.energy),
+        shopping: Math.round(g.shopping),
+      }));
+  }, [entries, dateRange]);
 
   const dataKey = activeCategory === "All" ? "total" : activeCategory.toLowerCase();
   const lineColor = categories.find((c) => c.key === activeCategory)?.color || "#22C55E";
@@ -52,11 +85,16 @@ const TrendChart = () => {
   return (
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
-        Monthly emissions over time
+        {dateRange === "This Month" ? "Daily emissions over time" : "Monthly emissions over time"}
       </h3>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <ComposedChart data={allData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+      {chartData.length === 0 ? (
+        <div className="h-[280px] flex items-center justify-center text-xs text-muted-foreground">
+          No data available
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
           <defs>
             <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
@@ -105,6 +143,7 @@ const TrendChart = () => {
           />
         </ComposedChart>
       </ResponsiveContainer>
+      )}
 
       <div className="flex items-center gap-2 mt-4">
         <span className="text-[10px] font-mono text-muted-foreground/50 mr-1">Show:</span>

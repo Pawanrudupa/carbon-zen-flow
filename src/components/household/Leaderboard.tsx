@@ -1,14 +1,94 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import SkeletonCard from "@/components/ui/SkeletonCard";
+import ErrorCard from "@/components/ui/ErrorCard";
 
-const rankings = [
-  { rank: 1, name: "Sam Lee", initials: "SL", color: "hsl(255, 82%, 76%)", kg: 245, delta: -14, medal: "🥇", tint: "rgba(255,215,0,0.06)" },
-  { rank: 2, name: "Priya Sharma", initials: "PS", color: "hsl(217, 91%, 60%)", kg: 290, delta: -7, medal: "🥈", tint: "rgba(192,192,192,0.06)" },
-  { rank: 3, name: "Alex Chen", initials: "AC", color: "hsl(142, 71%, 45%)", kg: 312, delta: -18, medal: "🥉", tint: "rgba(205,127,50,0.06)" },
+interface LeaderboardProps {
+  householdId: string;
+}
+
+const colors = [
+  "hsl(142, 71%, 45%)",
+  "hsl(217, 91%, 60%)",
+  "hsl(255, 82%, 76%)",
+  "hsl(45, 93%, 47%)",
+  "hsl(0, 84%, 60%)",
 ];
 
-const maxKg = Math.max(...rankings.map((r) => r.kg));
+const Leaderboard = ({ householdId }: LeaderboardProps) => {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["household-leaderboard", householdId],
+    queryFn: async () => {
+      const { data: members, error: memErr } = await supabase
+        .from("household_members")
+        .select("user_id, profiles(username)")
+        .eq("household_id", householdId);
+      if (memErr) throw memErr;
 
-const Leaderboard = () => {
+      const userIds = members.map(m => m.user_id);
+      
+      const start = new Date();
+      start.setDate(1); // this month
+      
+      const { data: entries, error: entErr } = await supabase
+        .from("entries")
+        .select("user_id, co2_kg")
+        .in("user_id", userIds)
+        .gte("logged_at", start.toISOString());
+      if (entErr) throw entErr;
+
+      return { members, entries };
+    },
+    enabled: !!householdId,
+  });
+
+  const rankings = useMemo(() => {
+    if (!data) return [];
+    
+    const memberStats: Record<string, any> = {};
+    data.members.forEach((m, i) => {
+      const name = m.profiles?.username || "Unknown";
+      memberStats[m.user_id] = {
+        name,
+        initials: name.substring(0, 2).toUpperCase(),
+        color: colors[i % colors.length],
+        kg: 0,
+      };
+    });
+
+    data.entries.forEach(e => {
+      if (memberStats[e.user_id]) {
+        memberStats[e.user_id].kg += (e.co2_kg || 0);
+      }
+    });
+
+    const sorted = Object.values(memberStats).sort((a: any, b: any) => a.kg - b.kg);
+    
+    return sorted.map((s: any, i) => {
+      let medal = "";
+      let tint = "transparent";
+      if (i === 0) { medal = "🥇"; tint = "rgba(255,215,0,0.06)"; }
+      else if (i === 1) { medal = "🥈"; tint = "rgba(192,192,192,0.06)"; }
+      else if (i === 2) { medal = "🥉"; tint = "rgba(205,127,50,0.06)"; }
+      
+      return {
+        ...s,
+        rank: i + 1,
+        kg: Math.round(s.kg),
+        delta: 0, // Placeholder
+        medal,
+        tint
+      };
+    });
+  }, [data]);
+
+  const maxKg = rankings.length > 0 ? Math.max(...rankings.map((r) => r.kg), 1) : 1;
+
+  if (isLoading) return <SkeletonCard className="h-48" />;
+  if (isError) return <ErrorCard onRetry={() => refetch()} />;
+
   return (
     <div>
       <h3 className="font-heading text-lg font-semibold text-foreground mb-4">
@@ -66,9 +146,11 @@ const Leaderboard = () => {
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground/60 italic mt-3 text-center">
-        Sam is this month's household champion. Everyone improved vs last month.
-      </p>
+      {rankings.length > 0 && (
+        <p className="text-xs text-muted-foreground/60 italic mt-3 text-center">
+          {rankings[0].name} is this month's household champion.
+        </p>
+      )}
     </div>
   );
 };

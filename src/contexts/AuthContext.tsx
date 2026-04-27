@@ -23,9 +23,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setLoading(false);
+
+      // Fire-and-forget profile upsert — don't await so it doesn't block
+      // rendering. This lazily ensures the profiles row exists for FK constraints.
+      if (_event === "SIGNED_IN" && session?.user) {
+        const u = session.user;
+        supabase.from("profiles").upsert(
+          {
+            id: u.id,
+            username:
+              u.user_metadata?.display_name ||
+              u.user_metadata?.full_name ||
+              u.email?.split("@")[0] ||
+              "User",
+          },
+          { onConflict: "id", ignoreDuplicates: true }
+        ).then(); // non-blocking
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {

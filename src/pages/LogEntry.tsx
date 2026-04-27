@@ -72,6 +72,21 @@ const LogEntry = () => {
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
+
+    // Fire profile upsert in the background — don't await it.
+    // The AuthContext already does this on login; this is a safety net only.
+    supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        username:
+          user.user_metadata?.display_name ||
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "User",
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    ).then(); // non-blocking
+
     const { error } = await supabase.from("entries").insert({
       user_id: user.id,
       category: activeTab,
@@ -85,7 +100,9 @@ const LogEntry = () => {
       toast.error("Failed to save entry: " + error.message);
     } else {
       toast.success(`Logged ${co2Estimate.toFixed(1)} kg CO₂`);
-      queryClient.invalidateQueries({ queryKey: ["monthly-co2"] });
+      // Single invalidation covers CarbonOrb, CategoryBreakdown, TrendSparklines, LogTimeline
+      queryClient.invalidateQueries({ queryKey: ["dashboard-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics-entries"] });
       setFormData({});
       setNotes("");
     }

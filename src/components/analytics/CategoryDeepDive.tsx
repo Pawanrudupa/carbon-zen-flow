@@ -7,28 +7,62 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import { useMemo } from "react";
 
-const stackedData = [
-  { month: "Nov", Food: 150, Transport: 110, Energy: 80, Shopping: 40 },
-  { month: "Dec", Food: 170, Transport: 120, Energy: 85, Shopping: 35 },
-  { month: "Jan", Food: 130, Transport: 100, Energy: 82, Shopping: 40 },
-  { month: "Feb", Food: 100, Transport: 75, Energy: 63, Shopping: 30 },
-  { month: "Mar", Food: 155, Transport: 105, Energy: 80, Shopping: 40 },
-  { month: "Apr", Food: 120, Transport: 90, Energy: 70, Shopping: 32 },
-];
+interface CategoryDeepDiveProps {
+  entries: any[];
+}
 
-const cats = [
-  { key: "Food", color: "#22C55E", pct: 38 },
-  { key: "Transport", color: "#3B82F6", pct: 29 },
-  { key: "Energy", color: "#F59E0B", pct: 22 },
-  { key: "Shopping", color: "#A78BFA", pct: 10 },
-];
+// base colors
+const CAT_COLORS: Record<string, string> = {
+  Food: "#22C55E",
+  Transport: "#3B82F6",
+  Energy: "#F59E0B",
+  Shopping: "#A78BFA",
+};
 
 const ringRadius = [72, 58, 44, 30];
 
-const CategoryDeepDive = () => {
+const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
+  const { stack, cats, totalAll } = useMemo(() => {
+    const groups: Record<string, any> = {};
+    const catTotals: Record<string, number> = { Food: 0, Transport: 0, Energy: 0, Shopping: 0 };
+    let totalAll = 0;
+
+    entries.forEach((e) => {
+      const d = new Date(e.logged_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      
+      if (!groups[key]) {
+        groups[key] = { month: d.toLocaleString("en-US", { month: "short" }), sortKey: key, Food: 0, Transport: 0, Energy: 0, Shopping: 0 };
+      }
+      
+      let cat = e.category || "other";
+      cat = cat.charAt(0).toUpperCase() + cat.slice(1);
+      if (catTotals[cat] === undefined) cat = "Shopping"; // Map unknown to something, or ignore. Just summing known ones.
+      
+      if (catTotals[cat] !== undefined) {
+        const val = e.co2_kg || 0;
+        groups[key][cat] += val;
+        catTotals[cat] += val;
+        totalAll += val;
+      }
+    });
+
+    const stack = Object.values(groups).sort((a: any, b: any) => a.sortKey.localeCompare(b.sortKey));
+    
+    const cats = Object.entries(CAT_COLORS).map(([key, color]) => ({
+      key,
+      color,
+      pct: totalAll > 0 ? Math.round((catTotals[key] / totalAll) * 100) : 0,
+    }));
+
+    return { stack, cats, totalAll };
+  }, [entries]);
+
+  if (stack.length === 0) return null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* Stacked bar chart */}
@@ -37,7 +71,7 @@ const CategoryDeepDive = () => {
           Breakdown over time
         </h3>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={stackedData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+          <BarChart data={stack} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(34,197,94,0.08)" />
             <XAxis
               dataKey="month"
@@ -108,8 +142,8 @@ const CategoryDeepDive = () => {
               })}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-mono text-lg font-bold text-foreground">315 kg</span>
-              <span className="font-mono text-[9px] text-muted-foreground">this month</span>
+              <span className="font-mono text-lg font-bold text-foreground">{Math.round(totalAll)} kg</span>
+              <span className="font-mono text-[9px] text-muted-foreground">total</span>
             </div>
           </div>
           <div className="flex flex-col gap-3">

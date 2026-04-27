@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 
 interface Props {
   onInvite: () => void;
+  householdName: string;
 }
 
-const HouseholdHeader = ({ onInvite }: Props) => {
+const HouseholdHeader = ({ onInvite, householdName }: Props) => {
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState("The Chen Household");
+  const [name, setName] = useState(householdName);
 
   return (
     <div>

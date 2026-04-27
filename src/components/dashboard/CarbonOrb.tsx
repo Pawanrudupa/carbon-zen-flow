@@ -1,38 +1,28 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import CountUp from "./CountUp";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PenLine } from "lucide-react";
+import ErrorCard from "@/components/ui/ErrorCard";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const CarbonOrb = () => {
-  const { user } = useAuth();
   const target = 350;
+  const { data: allEntries = [], isLoading, isError, refetch } = useDashboardData();
 
-  const { data: total = 0, isLoading } = useQuery({
-    queryKey: ["monthly-co2", user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const { data, error } = await supabase
-        .from("entries")
-        .select("co2_kg")
-        .eq("user_id", user.id)
-        .gte("logged_at", startOfMonth);
-      if (error) throw error;
-      return (data || []).reduce((sum, e) => sum + (e.co2_kg || 0), 0);
-    },
-    enabled: !!user,
-  });
+  const total = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return allEntries
+      .filter(e => new Date(e.logged_at) >= startOfMonth)
+      .reduce((sum, e) => sum + (e.co2_kg || 0), 0);
+  }, [allEntries]);
 
   const ratio = total / target;
   const progress = Math.min(ratio * 100, 100);
   const color = ratio < 0.8 ? "text-primary" : ratio <= 1 ? "text-chart-amber" : "text-destructive";
   const strokeColor = ratio < 0.8 ? "hsl(142 71% 45%)" : ratio <= 1 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
   const circumference = 2 * Math.PI * 120;
-
   const hasEntries = total > 0;
 
   return (
@@ -45,6 +35,8 @@ const CarbonOrb = () => {
         <div className="w-[240px] h-[240px] flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : isError ? (
+        <ErrorCard message="Failed to load carbon total" onRetry={() => refetch()} className="w-full" />
       ) : (
         <>
           <motion.div

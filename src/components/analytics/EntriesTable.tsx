@@ -1,62 +1,60 @@
 import { useState, useMemo } from "react";
 import { Search, ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 
+interface EntriesTableProps {
+  entries: any[];
+}
+
 const categoryMeta: Record<string, { color: string; emoji: string }> = {
   Food: { color: "#22C55E", emoji: "🍔" },
   Transport: { color: "#3B82F6", emoji: "🚗" },
   Energy: { color: "#F59E0B", emoji: "⚡" },
   Shopping: { color: "#A78BFA", emoji: "🛍️" },
+  Other: { color: "#94a3b8", emoji: "📝" },
 };
-
-const rawEntries = [
-  { date: "2026-04-02", cat: "Food", desc: "Grocery run — organic veggies", co2: 4.2, avg: 6.1 },
-  { date: "2026-04-01", cat: "Transport", desc: "Drove to office (32 km)", co2: 8.1, avg: 7.5 },
-  { date: "2026-03-31", cat: "Energy", desc: "Heating — cold snap", co2: 12.4, avg: 9.0 },
-  { date: "2026-03-30", cat: "Shopping", desc: "New running shoes", co2: 14.0, avg: 10.0 },
-  { date: "2026-03-29", cat: "Food", desc: "Takeout sushi dinner", co2: 7.8, avg: 6.1 },
-  { date: "2026-03-28", cat: "Transport", desc: "Bus commute", co2: 2.1, avg: 7.5 },
-  { date: "2026-03-27", cat: "Food", desc: "Home-cooked lentil stew", co2: 1.9, avg: 6.1 },
-  { date: "2026-03-26", cat: "Energy", desc: "Laundry + dryer cycle", co2: 5.2, avg: 9.0 },
-  { date: "2026-03-25", cat: "Transport", desc: "Train to conference", co2: 3.4, avg: 7.5 },
-  { date: "2026-03-24", cat: "Food", desc: "Steak dinner with friends", co2: 11.2, avg: 6.1 },
-  { date: "2026-03-23", cat: "Shopping", desc: "Electronics — headphones", co2: 18.5, avg: 10.0 },
-  { date: "2026-03-22", cat: "Transport", desc: "Uber to airport", co2: 9.8, avg: 7.5 },
-  { date: "2026-03-21", cat: "Food", desc: "Veggie burrito bowl", co2: 2.8, avg: 6.1 },
-  { date: "2026-03-20", cat: "Energy", desc: "AC running all day", co2: 11.0, avg: 9.0 },
-  { date: "2026-03-19", cat: "Food", desc: "Coffee + pastry", co2: 1.4, avg: 6.1 },
-  { date: "2026-03-18", cat: "Transport", desc: "Cycled to work", co2: 0.2, avg: 7.5 },
-  { date: "2026-03-17", cat: "Shopping", desc: "Thrift store finds", co2: 3.1, avg: 10.0 },
-  { date: "2026-03-16", cat: "Food", desc: "BBQ ribs", co2: 9.5, avg: 6.1 },
-  { date: "2026-03-15", cat: "Energy", desc: "Water heater overnight", co2: 6.8, avg: 9.0 },
-  { date: "2026-03-14", cat: "Transport", desc: "Road trip (180 km)", co2: 22.3, avg: 7.5 },
-  { date: "2026-03-13", cat: "Food", desc: "Salad + smoothie", co2: 1.2, avg: 6.1 },
-  { date: "2026-03-12", cat: "Shopping", desc: "Winter jacket", co2: 21.0, avg: 10.0 },
-  { date: "2026-03-11", cat: "Transport", desc: "Walked to gym", co2: 0.0, avg: 7.5 },
-  { date: "2026-03-10", cat: "Energy", desc: "Space heater — 6 hrs", co2: 8.4, avg: 9.0 },
-  { date: "2026-03-09", cat: "Food", desc: "Pasta night", co2: 3.6, avg: 6.1 },
-  { date: "2026-03-08", cat: "Transport", desc: "Carpool to event", co2: 4.1, avg: 7.5 },
-  { date: "2026-03-07", cat: "Shopping", desc: "Books + stationery", co2: 2.2, avg: 10.0 },
-  { date: "2026-03-06", cat: "Food", desc: "Fish tacos", co2: 5.0, avg: 6.1 },
-  { date: "2026-03-05", cat: "Energy", desc: "Dishwasher + oven", co2: 4.5, avg: 9.0 },
-  { date: "2026-03-04", cat: "Transport", desc: "E-scooter rental", co2: 0.8, avg: 7.5 },
-];
 
 const PER_PAGE = 10;
 
-const EntriesTable = () => {
+const EntriesTable = ({ entries }: EntriesTableProps) => {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
   const [sortBy, setSortBy] = useState("date");
   const [page, setPage] = useState(0);
 
+  const mappedEntries = useMemo(() => {
+    const catAvgs: Record<string, { sum: number; count: number }> = {};
+    entries.forEach(e => {
+      let cat = e.category;
+      cat = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : "Other";
+      if (!catAvgs[cat]) catAvgs[cat] = { sum: 0, count: 0 };
+      catAvgs[cat].sum += e.co2_kg;
+      catAvgs[cat].count++;
+    });
+
+    return entries.map(e => {
+      let cat = e.category;
+      cat = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : "Other";
+      const d = new Date(e.logged_at);
+      const dateStr = d.toISOString().split("T")[0];
+      return {
+        date: dateStr,
+        cat: cat,
+        desc: e.description || "",
+        co2: e.co2_kg || 0,
+        avg: catAvgs[cat] ? catAvgs[cat].sum / catAvgs[cat].count : 0,
+      };
+    });
+  }, [entries]);
+
   const filtered = useMemo(() => {
-    let items = rawEntries;
+    let items = mappedEntries;
     if (catFilter !== "All") items = items.filter((e) => e.cat === catFilter);
     if (search) items = items.filter((e) => e.desc.toLowerCase().includes(search.toLowerCase()));
     if (sortBy === "co2") items = [...items].sort((a, b) => b.co2 - a.co2);
     if (sortBy === "category") items = [...items].sort((a, b) => a.cat.localeCompare(b.cat));
+    if (sortBy === "date") items = [...items].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return items;
-  }, [search, catFilter, sortBy]);
+  }, [search, catFilter, sortBy, mappedEntries]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
@@ -116,7 +114,7 @@ const EntriesTable = () => {
             {paged.map((e, i) => {
               const diff = e.co2 - e.avg;
               const isBelow = diff < 0;
-              const meta = categoryMeta[e.cat];
+              const meta = categoryMeta[e.cat] || categoryMeta["Other"];
               return (
                 <tr
                   key={i}

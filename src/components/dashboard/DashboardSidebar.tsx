@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -28,6 +29,7 @@ const DashboardSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   const displayName = user?.user_metadata?.display_name || user?.email || "U";
   const initial = displayName.charAt(0).toUpperCase();
@@ -36,6 +38,28 @@ const DashboardSidebar = () => {
     await signOut();
     navigate("/login");
   };
+
+  if (isMobile) {
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-primary/10 flex items-center justify-around px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        {navItems.slice(0, 5).map((item) => {
+          const active = location.pathname === item.path;
+          return (
+            <Link
+              key={item.label}
+              to={item.path}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <item.icon size={20} className={active ? "drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" : ""} />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
 
   return (
     <aside

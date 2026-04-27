@@ -1,18 +1,64 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 
-const weekdayData = [
-  { day: "Mon", avg: 10.2 },
-  { day: "Tue", avg: 8.1 },
-  { day: "Wed", avg: 9.5 },
-  { day: "Thu", avg: 10.8 },
-  { day: "Fri", avg: 11.3 },
-  { day: "Sat", avg: 13.7 },
-  { day: "Sun", avg: 12.1 },
-];
+interface PatternInsightsProps {
+  entries: any[];
+}
 
-const maxAvg = Math.max(...weekdayData.map((d) => d.avg));
+const PatternInsights = ({ entries }: PatternInsightsProps) => {
+  const insights = useMemo(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const sums = Array(7).fill(0);
+    const counts = Array(7).fill(0);
 
-const PatternInsights = () => {
+    let currentMonthSum = 0;
+    const now = new Date();
+
+    entries.forEach((e) => {
+      const d = new Date(e.logged_at);
+      const dow = d.getDay();
+      sums[dow] += e.co2_kg;
+      counts[dow] += 1;
+
+      if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        currentMonthSum += e.co2_kg;
+      }
+    });
+
+    const weekdayData = days.map((day, i) => ({
+      day,
+      avg: counts[i] > 0 ? parseFloat((sums[i] / counts[i]).toFixed(1)) : 0,
+    }));
+
+    const reordered = [
+      weekdayData[1], weekdayData[2], weekdayData[3], weekdayData[4],
+      weekdayData[5], weekdayData[6], weekdayData[0]
+    ];
+
+    const maxAvg = Math.max(...reordered.map((d) => d.avg), 1);
+    const validAvgs = reordered.filter((d) => d.avg > 0).map((d) => d.avg);
+    const minAvg = validAvgs.length > 0 ? Math.min(...validAvgs) : 0;
+    const bestDay = reordered.find((d) => d.avg === minAvg && d.avg > 0)?.day || "N/A";
+
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysPassed = now.getDate() || 1;
+    const target = 350;
+    const forecast = currentMonthSum > 0 ? Math.round((currentMonthSum / daysPassed) * daysInMonth) : 0;
+    const diff = target - forecast;
+
+    return {
+      weekdayData: reordered,
+      maxAvg,
+      bestDay,
+      minAvg,
+      currentMonthSum,
+      forecast,
+      diff,
+      target
+    };
+  }, [entries]);
+
+  const { weekdayData, maxAvg, bestDay, minAvg, forecast, diff, target } = insights;
   return (
     <div>
       <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
@@ -29,7 +75,7 @@ const PatternInsights = () => {
                 <div className="flex-1 h-3 bg-muted/20 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: d.avg === Math.min(...weekdayData.map((x) => x.avg)) ? "#22C55E" : "hsl(142 71% 45% / 0.3)" }}
+                    style={{ background: d.avg === minAvg && minAvg > 0 ? "#22C55E" : "hsl(142 71% 45% / 0.3)" }}
                     initial={{ width: 0 }}
                     animate={{ width: `${(d.avg / maxAvg) * 100}%` }}
                     transition={{ duration: 0.8, delay: 0.1 }}
@@ -39,7 +85,7 @@ const PatternInsights = () => {
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-primary/60 mt-2 font-mono">Tuesday is your greenest day</p>
+          <p className="text-[10px] text-primary/60 mt-2 font-mono">{bestDay} is your greenest day</p>
         </div>
 
         {/* Card 2 — Biggest win */}
@@ -57,14 +103,13 @@ const PatternInsights = () => {
           </div>
         </div>
 
-        {/* Card 3 — Forecast */}
         <div className="glass-card rounded-xl p-5 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-[0.15em] mb-3">Forecast</p>
             <p className="text-sm text-foreground/80 leading-relaxed">
-              At your current pace you'll finish April at{" "}
-              <span className="font-mono text-primary font-semibold">330 kg</span> —{" "}
-              <span className="font-mono text-primary font-semibold">20 kg</span> under target. Keep it up.
+              At your current pace you'll finish this month at{" "}
+              <span className="font-mono text-primary font-semibold">{forecast} kg</span> —{" "}
+              <span className="font-mono text-primary font-semibold">{Math.abs(diff)} kg</span> {diff >= 0 ? "under" : "over"} target. {diff >= 0 ? "Keep it up." : "Time to cut back."}
             </p>
           </div>
           <div className="mt-4">
@@ -72,13 +117,13 @@ const PatternInsights = () => {
               <motion.div
                 className="h-full rounded-full bg-primary"
                 initial={{ width: 0 }}
-                animate={{ width: "78%" }}
+                animate={{ width: `${Math.min((forecast / target) * 100, 100)}%` }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
               />
             </div>
             <div className="flex justify-between mt-1">
               <span className="text-[9px] font-mono text-muted-foreground/40">0 kg</span>
-              <span className="text-[9px] font-mono text-primary/60">330 / 350 kg</span>
+              <span className="text-[9px] font-mono text-primary/60">{forecast} / {target} kg</span>
             </div>
           </div>
         </div>

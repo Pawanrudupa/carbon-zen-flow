@@ -20,7 +20,7 @@ const notifications = [
 ];
 
 const DashboardHeader = () => {
-  const month = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+  const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { user } = useAuth();

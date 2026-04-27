@@ -1,26 +1,53 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 
-const MONTHS = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
+interface ActivityHeatmapProps {
+  entries: any[];
+}
+
 const DAY_LABELS = ["M", "", "W", "", "F", "", ""];
 const DAY_FULL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAYS_PER_WEEK = 7;
 
-const ActivityHeatmap = () => {
+const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
 
   const weeks = 26;
-  const data = useMemo(
-    () =>
-      Array.from({ length: weeks * DAYS_PER_WEEK }, (_, i) => ({
-        co2: Math.round(Math.random() * 14 + 4),
-      })),
-    []
-  );
+  
+  const data = useMemo(() => {
+    const today = new Date();
+    const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=Mon, 6=Sun
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + (6 - dow));
+    
+    const days = weeks * DAYS_PER_WEEK;
+    const result = Array(days).fill(null).map((_, i) => {
+      const d = new Date(endOfWeek);
+      d.setDate(endOfWeek.getDate() - (days - 1 - i));
+      return {
+        date: d,
+        dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+        co2: 0,
+      };
+    });
 
-  const maxCo2 = Math.max(...data.map((d) => d.co2));
+    const dayMap = new Map(result.map((r, i) => [r.dateStr, i]));
+
+    entries.forEach((e) => {
+      const d = new Date(e.logged_at);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const idx = dayMap.get(ds);
+      if (idx !== undefined) {
+        result[idx].co2 += e.co2_kg || 0;
+      }
+    });
+
+    return result;
+  }, [entries]);
+
+  const maxCo2 = Math.max(...data.map((d) => d.co2), 1);
   const minCo2 = Math.min(...data.map((d) => d.co2));
-  const avg = data.reduce((s, d) => s + d.co2, 0) / data.length;
+  const avg = data.reduce((s, d) => s + d.co2, 0) / (data.filter(d => d.co2 > 0).length || 1);
 
   // Brighter green = lower emissions
   const getColor = (co2: number) => {
@@ -35,11 +62,9 @@ const ActivityHeatmap = () => {
   const getTooltip = (idx: number) => {
     const d = data[idx];
     const dayOfWeek = DAY_FULL[idx % 7];
-    const weekIdx = Math.floor(idx / 7);
-    const dayNum = (weekIdx % 30) + 1;
-    const monthIdx = Math.min(Math.floor(weekIdx / 4.33), 5);
-    const status = d.co2 < avg ? "below average" : "above average";
-    return `${dayOfWeek} ${dayNum} ${MONTHS[monthIdx]} · ${d.co2} kg CO₂ — ${status}`;
+    const status = d.co2 === 0 ? "no data" : d.co2 < avg ? "below avg" : "above avg";
+    const dateStr = d.date.toLocaleString("en-US", { month: "short", day: "numeric" });
+    return `${dayOfWeek}, ${dateStr} · ${Math.round(d.co2)} kg CO₂ — ${status}`;
   };
 
   return (
@@ -50,17 +75,29 @@ const ActivityHeatmap = () => {
 
       <div className="overflow-x-auto">
         <div className="inline-flex flex-col">
-          {/* Month labels top */}
-          <div className="flex ml-[28px] mb-1">
-            {MONTHS.map((m) => (
-              <span
-                key={m}
-                className="text-[9px] font-mono text-muted-foreground/40"
-                style={{ width: `${(weeks / 6) * 16}px` }}
-              >
-                {m}
-              </span>
-            ))}
+          {/* Month labels top — computed from actual date range */}
+          <div className="relative flex ml-[28px] mb-1 h-4">
+            {(() => {
+              const monthLabels: { label: string; col: number }[] = [];
+              let lastMonth = -1;
+              data.forEach((cell, idx) => {
+                const col = Math.floor(idx / 7);
+                const m = cell.date.getMonth();
+                if (m !== lastMonth) {
+                  lastMonth = m;
+                  monthLabels.push({ label: cell.date.toLocaleString("en-US", { month: "short" }), col });
+                }
+              });
+              return monthLabels.map(({ label, col }) => (
+                <span
+                  key={`${label}-${col}`}
+                  className="text-[9px] font-mono text-muted-foreground/40 absolute"
+                  style={{ left: `${28 + col * 16}px` }}
+                >
+                  {label}
+                </span>
+              ));
+            })()}
           </div>
 
           {/* 7 rows (Mon–Sun), day labels left (M W F only) */}
