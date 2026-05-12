@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
-
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Flame, UserMinus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import ErrorCard from "@/components/ui/ErrorCard";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface MemberCardsProps {
   householdId: string;
@@ -31,6 +33,8 @@ const cardAnim = {
 
 const MemberCards = ({ householdId }: MemberCardsProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [removingId, setRemovingId] = useState<string | null>(null);
   
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["household-members", householdId],
@@ -53,9 +57,36 @@ const MemberCards = ({ householdId }: MemberCardsProps) => {
         .gte("logged_at", start.toISOString());
       if (entErr) throw entErr;
 
-      return { members, entries };
+      // Also determine viewer's role
+      const viewerMember = (members as any[]).find((m: any) => m.user_id === user?.id);
+      const viewerRole = viewerMember?.role || "member";
+      return { members, entries, viewerRole };
     },
     enabled: !!householdId,
+  });
+
+  const isViewer = (data?.viewerRole === "owner" || data?.viewerRole === "admin");
+
+  const removeMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("household_members" as any)
+        .delete()
+        .eq("household_id", householdId)
+        .eq("user_id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Member removed.");
+      setRemovingId(null);
+      queryClient.invalidateQueries({ queryKey: ["household-members", householdId] });
+      queryClient.invalidateQueries({ queryKey: ["household-leaderboard", householdId] });
+      queryClient.invalidateQueries({ queryKey: ["household-overview", householdId] });
+      queryClient.invalidateQueries({ queryKey: ["household-member-count"] });
+    },
+    onError: (err: any) => {
+      toast.error("Failed to remove: " + err.message);
+    },
   });
 
   const cards = useMemo(() => {
@@ -65,7 +96,11 @@ const MemberCards = ({ householdId }: MemberCardsProps) => {
     const memberStats: Record<string, any> = {};
 
     data.members.forEach((m, i) => {
-      const name = m.profiles?.username || "Unknown";
+      let name = "Household Member";
+      if (m.profiles) {
+        name = Array.isArray(m.profiles) ? (m.profiles[0]?.username || name) : (m.profiles.username || name);
+      }
+      
       memberStats[m.user_id] = {
         id: m.user_id,
         name,
@@ -113,10 +148,11 @@ const MemberCards = ({ householdId }: MemberCardsProps) => {
   if (isError) return <ErrorCard onRetry={() => refetch()} />;
 
   return (
-    <div>
-      <h3 className="font-heading text-lg font-semibold text-foreground mb-4">Who's tracking</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {cards.map((m, i) => (
+    <>
+      <div>
+        <h3 className="font-heading text-lg font-semibold text-foreground mb-4">Who's tracking</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {cards.map((m, i) => (
           <motion.div
             key={m.name}
             className="rounded-xl border bg-card p-5 flex flex-col"
@@ -187,17 +223,64 @@ const MemberCards = ({ householdId }: MemberCardsProps) => {
               <span className="font-mono">· {m.topKg} kg</span>
             </p>
 
-            {/* View profile */}
-            <div className="mt-auto pt-3 text-right">
-              <button className="text-[11px] text-primary/60 hover:text-primary transition-colors">
-                View profile →
-              </button>
+            {/* Admin: remove member */}
+            <div className="mt-auto pt-3 flex items-center justify-between">
+              {isViewer && !m.you && (
+                <button
+                  onClick={() => setRemovingId(m.id)}
+                  className="text-[11px] text-destructive/60 hover:text-destructive transition-colors flex items-center gap-1"
+                >
+                  <UserMinus size={12} />
+                  Remove
+                </button>
+              )}
+              {(!isViewer || m.you) && (
+                <span className="text-[11px] text-muted-foreground/40 font-mono">
+                  {m.you ? "(you)" : ""}
+                </span>
+              )}
             </div>
           </motion.div>
         ))}
+        </div>
       </div>
-    </div>
+
+      {/* Remove confirmation dialog */}
+      {(() => {
+        const target = cards.find((c) => c.id === removingId);
+        return (
+          <Dialog open={!!removingId} onOpenChange={(o) => !o && setRemovingId(null)}>
+            <DialogContent className="bg-card border-primary/10 max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="font-heading text-foreground">Remove member?</DialogTitle>
+                <DialogDescription className="text-muted-foreground text-sm">
+                  Remove <strong className="text-foreground">{target?.name}</strong> from the
+                  household? They can rejoin with an invite link.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex gap-3 mt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-primary/20"
+                  onClick={() => setRemovingId(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => target && removeMutation.mutate(target.id)}
+                  disabled={removeMutation.isPending}
+                >
+                  {removeMutation.isPending ? "Removing…" : "Remove"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+    </>
   );
 };
 
 export default MemberCards;
+

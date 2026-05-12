@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Plus, Leaf, Flame, Trophy, TrendingDown, FileText, Users } from "lucide-react";
+import { Bell, Plus, Leaf } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,13 +11,8 @@ const quickCategories = [
   { label: "Shopping", emoji: "🛍️" },
 ];
 
-const notifications = [
-  { id: 1, icon: Flame, color: "text-primary", title: "14-day streak!", desc: "You haven't missed a single day", time: "Just now", unread: true },
-  { id: 2, icon: TrendingDown, color: "text-primary", title: "Weekly emissions down 12%", desc: "Great progress vs last week", time: "2h ago", unread: true },
-  { id: 3, icon: Trophy, color: "hsl(var(--chart-amber))", title: "Challenge ending soon", desc: "Meatless Weekdays expires in 2 days", time: "5h ago", unread: true },
-  { id: 4, icon: Users, color: "hsl(var(--chart-blue))", title: "Household update", desc: "Sam logged a transport entry", time: "Yesterday", unread: false },
-  { id: 5, icon: FileText, color: "text-muted-foreground", title: "March report ready", desc: "Your monthly report has been generated", time: "2 days ago", unread: false },
-];
+// TODO: Fetch real notifications from Supabase
+const notifications: any[] = [];
 
 const DashboardHeader = () => {
   const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -96,35 +91,45 @@ const DashboardHeader = () => {
                 </div>
 
                 <div className="max-h-[340px] overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors border-b border-primary/5 last:border-0 ${
-                        n.unread ? "bg-primary/[0.03]" : ""
-                      }`}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <n.icon size={14} className={n.color} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
-                          {n.unread && <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground truncate">{n.desc}</p>
-                        <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{n.time}</p>
-                      </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center flex flex-col items-center justify-center">
+                      <Bell size={24} className="text-muted-foreground/30 mb-2" />
+                      <p className="text-sm font-medium text-foreground">No new notifications</p>
+                      <p className="text-xs text-muted-foreground mt-1">You're all caught up!</p>
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors border-b border-primary/5 last:border-0 ${
+                          n.unread ? "bg-primary/[0.03]" : ""
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <n.icon size={14} className={n.color} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
+                            {n.unread && <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{n.desc}</p>
+                          <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{n.time}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
 
-                <Link
-                  to="/settings"
-                  onClick={() => setOpen(false)}
-                  className="block text-center text-xs text-primary hover:underline py-2.5 border-t border-primary/5"
-                >
-                  Notification settings
-                </Link>
+                {notifications.length > 0 && (
+                  <Link
+                    to="/settings"
+                    onClick={() => setOpen(false)}
+                    className="block text-center text-xs text-primary hover:underline py-2.5 border-t border-primary/5"
+                  >
+                    Notification settings
+                  </Link>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

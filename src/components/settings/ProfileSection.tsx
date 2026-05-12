@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import Autocomplete from "react-google-autocomplete";
 
 const ProfileSection = () => {
   const { user } = useAuth();
@@ -30,11 +31,14 @@ const ProfileSection = () => {
         
       if (data) {
         setName(data.username || "");
-        setLocation(data.location || "");
-        setBio(data.bio || "");
       } else if (error && error.code !== "PGRST116") {
         console.error("Error loading profile:", error);
       }
+
+      // Read location and bio from user_metadata
+      const metadata = user.user_metadata || {};
+      setLocation(metadata.location || "");
+      setBio(metadata.bio || "");
       
       setLoading(false);
     };
@@ -46,13 +50,19 @@ const ProfileSection = () => {
     if (!user) return;
     setSaving(true);
     
-    const { error } = await supabase
+    // 1. Update username in profiles table
+    const { error: profileError } = await supabase
       .from("profiles")
-      .update({ username: name, location, bio })
+      .update({ username: name })
       .eq("id", user.id);
       
-    if (error) {
-      toast.error("Failed to save profile: " + error.message);
+    // 2. Update location and bio in user_metadata
+    const { error: authError } = await supabase.auth.updateUser({
+      data: { location, bio }
+    });
+      
+    if (profileError || authError) {
+      toast.error("Failed to save profile: " + (profileError?.message || authError?.message));
     } else {
       toast.success("Settings saved.");
     }
@@ -104,7 +114,14 @@ const ProfileSection = () => {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Location</label>
-          <Input value={location} onChange={(e) => setLocation(e.target.value)} className="bg-card border-primary/20 focus:ring-primary/40" />
+          <Autocomplete
+            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
+            onPlaceSelected={(place) => {
+              setLocation(place.formatted_address || place.name || "");
+            }}
+            defaultValue={location}
+            className="flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-card border-primary/20 focus:ring-primary/40"
+          />
           <p className="text-xs text-muted-foreground">Used for regional emission factors</p>
         </div>
 

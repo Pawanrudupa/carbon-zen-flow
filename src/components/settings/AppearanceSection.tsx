@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Check, Moon, Sun, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme, AccentId, Density } from "@/contexts/ThemeContext";
 
 const themes = [
   { id: "dark", label: "Dark", icon: Moon, available: true },
@@ -8,7 +8,7 @@ const themes = [
   { id: "light", label: "Light", icon: Sun, available: false },
 ];
 
-const accents = [
+const accents: { id: AccentId; color: string }[] = [
   { id: "green", color: "hsl(142 71% 45%)" },
   { id: "teal", color: "hsl(173 80% 40%)" },
   { id: "blue", color: "hsl(217 91% 60%)" },
@@ -16,10 +16,11 @@ const accents = [
   { id: "amber", color: "hsl(38 95% 51%)" },
 ];
 
+import { useState } from "react";
+
 const AppearanceSection = () => {
   const [theme, setTheme] = useState("dark");
-  const [accent, setAccent] = useState("green");
-  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
+  const { accent, setAccent, density, setDensity } = useTheme();
 
   return (
     <div className="space-y-6">
@@ -59,7 +60,7 @@ const AppearanceSection = () => {
           {accents.map((a) => (
             <button
               key={a.id}
-              onClick={() => { setAccent(a.id); toast.success("Accent preview updated."); }}
+              onClick={() => { setAccent(a.id); toast.success(`Accent color changed to ${a.id}.`); }}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                 accent === a.id ? "ring-2 ring-offset-2 ring-offset-background" : ""
               }`}
@@ -78,7 +79,7 @@ const AppearanceSection = () => {
           {(["comfortable", "compact"] as const).map((d) => (
             <button
               key={d}
-              onClick={() => setDensity(d)}
+              onClick={() => { setDensity(d); toast.success(`Data density set to ${d}.`); }}
               className={`px-4 py-1.5 rounded-md text-sm transition-all capitalize ${
                 density === d ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
               }`}

@@ -28,7 +28,7 @@ const CarbonOrb = () => {
   return (
     <div className="glass-card rounded-xl p-6 flex flex-col items-center justify-center h-full">
       <span className="font-mono text-xs text-muted-foreground/60 uppercase tracking-widest mb-4">
-        This Month
+        Month - {new Date().toLocaleDateString("en-US", { month: "long" })}
       </span>
 
       {isLoading ? (

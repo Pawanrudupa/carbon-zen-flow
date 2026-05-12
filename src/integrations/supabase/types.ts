@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           category: string | null
           description: string | null
+          difficulty: string | null
           duration_days: number | null
           icon: string | null
           id: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           category?: string | null
           description?: string | null
+          difficulty?: string | null
           duration_days?: number | null
           icon?: string | null
           id?: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           category?: string | null
           description?: string | null
+          difficulty?: string | null
           duration_days?: number | null
           icon?: string | null
           id?: string
@@ -106,27 +109,33 @@ export type Database = {
       user_challenges: {
         Row: {
           challenge_id: string | null
+          co2_saved: number | null
           completed_at: string | null
           id: string
           progress: number | null
           started_at: string | null
           user_id: string | null
+          xp_earned: number | null
         }
         Insert: {
           challenge_id?: string | null
+          co2_saved?: number | null
           completed_at?: string | null
           id?: string
           progress?: number | null
           started_at?: string | null
           user_id?: string | null
+          xp_earned?: number | null
         }
         Update: {
           challenge_id?: string | null
+          co2_saved?: number | null
           completed_at?: string | null
           id?: string
           progress?: number | null
           started_at?: string | null
           user_id?: string | null
+          xp_earned?: number | null
         }
         Relationships: [
           {

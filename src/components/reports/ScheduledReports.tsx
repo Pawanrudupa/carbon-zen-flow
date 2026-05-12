@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Pencil, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ScheduledReports = () => {
+  const { user } = useAuth()
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [emailNotify, setEmailNotify] = useState(true);
   const [editingEmail, setEditingEmail] = useState(false);
-  const [email, setEmail] = useState("alex@example.com");
+  const [email, setEmail] = useState(user?.email || "");
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email)
+  }, [user])
 
   return (
     <div
