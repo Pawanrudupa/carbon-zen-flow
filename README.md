@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Welcome to Carbon_Zen project
 
 TODO: Document your project here
