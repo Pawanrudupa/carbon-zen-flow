@@ -1,47 +1,61 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Leaf, Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Leaf, Lock, Eye, EyeOff, CheckCircle, Mail, ArrowLeft, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 const UpdatePassword = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Email is passed via router state from ForgotPassword.
+  // Fall back to a local state so the user can type it if they land here directly.
+  const [email, setEmail] = useState<string>((location.state as any)?.email ?? "");
+  const [otpCode, setOtpCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const navigate = useNavigate();
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Supabase sends the user back here with a session in the URL hash
-  useEffect(() => {
-    // The hash contains the access_token after redirect — Supabase handles it automatically
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        // User is now in password recovery mode — form is active
-      }
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleVerifyAndUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
+
     if (password !== confirm) {
-      toast.error("Passwords do not match.");
+      setErrorMsg("Passwords do not match.");
       return;
     }
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
+      setErrorMsg("Password must be at least 6 characters.");
       return;
     }
+
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      // STEP 1: Verify the 6-digit OTP the user received by email
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode,
+        type: "recovery",
+      });
+      if (verifyError) throw verifyError;
+
+      // STEP 2: OTP verified → Supabase creates a temporary session.
+      // Immediately push the new password.
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
+      if (updateError) throw updateError;
+
       setDone(true);
       setTimeout(() => navigate("/dashboard"), 2500);
+    } catch (err: any) {
+      setErrorMsg(err.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,7 +82,7 @@ const UpdatePassword = () => {
               Set New Password
             </h1>
             <p className="text-muted-foreground text-sm text-center max-w-xs">
-              Choose a strong new password for your account.
+              Enter the 6-digit code from your email and choose a new password.
             </p>
           </div>
 
@@ -89,7 +103,48 @@ const UpdatePassword = () => {
               </div>
             </motion.div>
           ) : (
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleVerifyAndUpdate} className="space-y-4">
+
+              {/* Email — pre-filled from router state, editable if landed directly */}
+              <div>
+                <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 font-body transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* 6-digit OTP */}
+              <div>
+                <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
+                  6-Digit Code
+                </label>
+                <div className="relative">
+                  <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="otp-code"
+                    type="text"
+                    inputMode="numeric"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    required
+                    maxLength={6}
+                    placeholder="123456"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 font-mono tracking-widest transition-colors"
+                  />
+                </div>
+              </div>
+
               {/* New password */}
               <div>
                 <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
@@ -117,7 +172,7 @@ const UpdatePassword = () => {
                 </div>
               </div>
 
-              {/* Confirm */}
+              {/* Confirm password */}
               <div>
                 <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
                   Confirm Password
@@ -140,16 +195,33 @@ const UpdatePassword = () => {
                 )}
               </div>
 
+              {/* Error message */}
+              {errorMsg && (
+                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  {errorMsg}
+                </p>
+              )}
+
               <button
                 type="submit"
                 id="update-password-submit"
-                disabled={loading || !password || password !== confirm}
+                disabled={loading || !otpCode || otpCode.length < 6 || !password || password !== confirm}
                 className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50"
               >
-                {loading ? "Updating…" : "Update Password"}
+                {loading ? "Verifying…" : "Verify & Update Password"}
               </button>
             </form>
           )}
+
+          <div className="text-center">
+            <Link
+              to="/forgot-password"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft size={14} />
+              Request a new code
+            </Link>
+          </div>
         </div>
       </motion.div>
     </div>

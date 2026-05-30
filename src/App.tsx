@@ -21,6 +21,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import CommandCenterTest from "./pages/CommandCenterTest";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -40,6 +41,7 @@ const AnimatedRoutes = () => {
         <Route path="/household" element={<ProtectedRoute><Household /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/command-center-test" element={<CommandCenterTest />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

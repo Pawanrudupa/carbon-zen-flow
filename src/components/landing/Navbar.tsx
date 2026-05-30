@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
-      <div className="w-full max-w-7xl h-16 px-6 flex items-center justify-between rounded-2xl border border-white/5 bg-black/20 backdrop-blur-xl">
+      <div className="w-full max-w-7xl h-16 px-6 flex items-center justify-between rounded-2xl border border-white/10 bg-background/70 backdrop-blur-xl shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Leaf className="text-primary" size={18} />

@@ -28,7 +28,7 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
   const queryClient = useQueryClient();
 
   const { data: activeChallenges = [], isLoading: isLoadingActive } = useQuery({
-    queryKey: ["household-active-challenges", householdId],
+    queryKey: ["household-active-challenges", householdId, user?.id],
     queryFn: async () => {
       const { data: challenges, error: chError } = await supabase
         .from("challenges")
@@ -41,7 +41,7 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
       const challengeIds = challenges.map((c) => c.id);
       const { data: userChallenges, error: ucError } = await supabase
         .from("user_challenges")
-        .select("challenge_id, progress, user_id")
+        .select("challenge_id, progress, user_id, completed_at")
         .in("challenge_id", challengeIds);
       
       if (ucError) throw ucError;
@@ -62,11 +62,16 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
         const progressList = ucs.map((uc) => uc.progress || 0);
         const avgProgress = participants > 0 ? progressList.reduce((a, b) => a + b, 0) / participants : 0;
         
+        const hasJoined = ucs.some((uc) => uc.user_id === user?.id && !uc.completed_at);
+        const hasCompleted = ucs.some((uc) => uc.user_id === user?.id && uc.completed_at);
+
         return {
           id: ch.id,
           name: ch.title,
           participantsCount: participants,
           progress: Math.round(avgProgress),
+          hasJoined,
+          hasCompleted,
           memberProgress: progressList.map((p, i) => ({
             progress: p,
             color: colors[i % colors.length]
@@ -108,6 +113,50 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
       return data.map((d) => ({
         ...d,
         profiles: { username: profileMap.get(d.created_by) || "Unknown" }
+      }));
+    },
+    enabled: !!householdId
+  });
+
+  const { data: completedChallenges = [], isLoading: isLoadingCompleted } = useQuery({
+    queryKey: ["household-completed-challenges", householdId],
+    queryFn: async () => {
+      const { data: challenges, error: chError } = await supabase
+        .from("challenges")
+        .select("id, title")
+        .eq("household_id", householdId);
+      
+      if (chError) throw chError;
+      if (!challenges?.length) return [];
+
+      const challengeIds = challenges.map((c) => c.id);
+
+      const { data: userChallenges, error: ucError } = await supabase
+        .from("user_challenges")
+        .select("challenge_id, user_id, completed_at")
+        .in("challenge_id", challengeIds)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false });
+      
+      if (ucError) throw ucError;
+      if (!userChallenges?.length) return [];
+
+      const userIds = [...new Set(userChallenges.map((uc) => uc.user_id))];
+      const { data: profiles, error: profError } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+      
+      if (profError) throw profError;
+      const profileMap = new Map(profiles?.map((p) => [p.id, p.username]) || []);
+
+      const challengeMap = new Map(challenges.map((c) => [c.id, c.title]));
+
+      return userChallenges.map((uc) => ({
+        challengeId: uc.challenge_id,
+        challengeTitle: challengeMap.get(uc.challenge_id) || "Custom Challenge",
+        username: profileMap.get(uc.user_id) || "Unknown",
+        completedAt: uc.completed_at
       }));
     },
     enabled: !!householdId
@@ -156,6 +205,17 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
       
       if (chErr) throw chErr;
 
+      // Join the challenge for the user who accepted it
+      const { error: joinErr } = await supabase
+        .from("user_challenges")
+        .insert({
+          user_id: user!.id,
+          challenge_id: ch.id,
+          progress: 0,
+        });
+
+      if (joinErr) throw joinErr;
+
       const { error: sugErr } = await supabase
         .from("household_challenge_suggestions")
         .update({ status: "accepted" })
@@ -164,9 +224,10 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
       if (sugErr) throw sugErr;
     },
     onSuccess: () => {
-      toast.success("Suggestion accepted and added to active challenges!");
+      toast.success("Suggestion accepted and joined!");
       queryClient.invalidateQueries({ queryKey: ["household-suggestions", householdId] });
       queryClient.invalidateQueries({ queryKey: ["household-active-challenges", householdId] });
+      queryClient.invalidateQueries({ queryKey: ["active-challenges"] });
     },
     onError: (err: any) => toast.error("Failed to accept suggestion: " + err.message)
   });
@@ -184,6 +245,25 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
       queryClient.invalidateQueries({ queryKey: ["household-suggestions", householdId] });
     },
     onError: (err: any) => toast.error("Failed to decline suggestion: " + err.message)
+  });
+
+  const joinChallengeMutation = useMutation({
+    mutationFn: async (challengeId: string) => {
+      const { error } = await supabase
+        .from("user_challenges")
+        .insert({
+          user_id: user!.id,
+          challenge_id: challengeId,
+          progress: 0,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Joined household challenge!");
+      queryClient.invalidateQueries({ queryKey: ["household-active-challenges", householdId] });
+      queryClient.invalidateQueries({ queryKey: ["active-challenges"] });
+    },
+    onError: (err: any) => toast.error("Failed to join challenge: " + err.message)
   });
 
   return (
@@ -206,12 +286,33 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
               <p className="text-xs text-muted-foreground font-mono">No active custom challenges yet.</p>
             ) : (
               activeChallenges.map((c) => (
-                <div key={c.id}>
+                <div key={c.id} className="border-b last:border-b-0 border-primary/5 pb-3 last:pb-0">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-foreground">{c.name}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      {c.participantsCount}/{memberCount} members
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-foreground font-semibold">{c.name}</span>
+                      <span className="text-[9px] font-mono text-muted-foreground">
+                        {c.participantsCount}/{memberCount} members
+                      </span>
+                    </div>
+                    {c.hasCompleted ? (
+                      <span className="text-[10px] font-mono text-primary font-semibold px-2 py-0.5 bg-primary/10 rounded-full">
+                        Completed
+                      </span>
+                    ) : c.hasJoined ? (
+                      <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 bg-muted/30 rounded-full">
+                        Joined
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => joinChallengeMutation.mutate(c.id)}
+                        disabled={joinChallengeMutation.isPending}
+                        className="h-6 text-[10px] px-2.5 font-mono border-primary/20 hover:bg-primary/10 hover:text-primary"
+                      >
+                        {joinChallengeMutation.isPending ? "Joining..." : "Join"}
+                      </Button>
+                    )}
                   </div>
                   {/* Multi-segment progress bar */}
                   <div className="h-2 rounded-full bg-muted/30 overflow-hidden flex">
@@ -325,6 +426,45 @@ const SharedChallenges = ({ householdId, memberCount }: SharedChallengesProps) =
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Completed Household Challenges */}
+      <div
+        className="rounded-xl border bg-card p-5 mt-4"
+        style={{ borderColor: "rgba(34,197,94,0.12)" }}
+      >
+        <h4 className="text-sm font-semibold text-foreground mb-4">Completed household challenges</h4>
+        <div className="space-y-3">
+          {isLoadingCompleted ? (
+            <div className="animate-pulse space-y-2">
+              <div className="h-8 bg-muted/20 rounded"></div>
+              <div className="h-8 bg-muted/20 rounded"></div>
+            </div>
+          ) : completedChallenges.length === 0 ? (
+            <p className="text-xs text-muted-foreground font-mono">
+              No completed household challenges yet. Complete active ones above!
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {completedChallenges.map((cc: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-primary/5 hover:border-primary/10 transition-colors"
+                >
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold text-foreground truncate">{cc.challengeTitle}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      Completed by <span className="text-primary font-medium">@{cc.username}</span>
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground/60 font-mono self-start mt-0.5">
+                    {new Date(cc.completedAt).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

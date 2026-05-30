@@ -3,17 +3,92 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Pencil, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ScheduledReports = () => {
-  const { user } = useAuth()
+  const { user } = useAuth();
+  
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [emailNotify, setEmailNotify] = useState(true);
   const [editingEmail, setEditingEmail] = useState(false);
-  const [email, setEmail] = useState(user?.email || "");
+  const [email, setEmail] = useState("");
 
+  // Fetch initial settings from Supabase
   useEffect(() => {
-    if (user?.email) setEmail(user.email)
-  }, [user])
+    const fetchPreferences = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('auto_generate_reports, report_email')
+        .eq('id', user.id)
+        .single();
+        
+      if (!error && data) {
+        if (data.auto_generate_reports !== null) {
+          setAutoGenerate(data.auto_generate_reports);
+        }
+        if (data.report_email) {
+          setEmail(data.report_email);
+        } else if (user.email) {
+          // Fallback to user auth email if no preference saved
+          setEmail(user.email);
+        }
+      }
+    };
+    
+    fetchPreferences();
+  }, [user]);
+
+  const toggleAutoGenerate = async (newValue: boolean) => {
+    const currentValue = autoGenerate;
+    
+    // 1. Instantly update the UI (Optimistic update)
+    setAutoGenerate(newValue); 
+
+    // 2. Save to Supabase
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        auto_generate_reports: newValue,
+        report_email: email // Save the email they typed in the input box
+      } as any)
+      .eq('id', user.id);
+
+    if (error) {
+      console.error("Failed to save preference:", error);
+      toast.error("Failed to save preference");
+      // Revert UI if database fails
+      setAutoGenerate(currentValue); 
+    } else {
+      console.log("Preferences saved successfully!");
+      toast.success("Preferences saved successfully!");
+    }
+  };
+
+  const saveEmailPreference = async (newEmail: string) => {
+    const currentEmail = email;
+    setEmail(newEmail);
+    setEditingEmail(false);
+
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ report_email: newEmail } as any)
+      .eq('id', user.id);
+
+    if (error) {
+      console.error("Failed to save email:", error);
+      toast.error("Failed to save email");
+      setEmail(currentEmail);
+    } else {
+      toast.success("Email address updated in Supabase!");
+    }
+  };
 
   return (
     <div
@@ -35,7 +110,7 @@ const ScheduledReports = () => {
               </p>
             )}
           </div>
-          <Switch checked={autoGenerate} onCheckedChange={setAutoGenerate} />
+          <Switch checked={autoGenerate} onCheckedChange={toggleAutoGenerate} />
         </div>
 
         {autoGenerate && (
@@ -57,9 +132,16 @@ const ScheduledReports = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       className="h-7 w-56 bg-muted/30 border-primary/20 text-xs font-mono"
                       autoFocus
-                      onKeyDown={(e) => e.key === "Enter" && setEditingEmail(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          saveEmailPreference(email);
+                        }
+                      }}
                     />
-                    <button onClick={() => setEditingEmail(false)} className="text-primary">
+                    <button 
+                      onClick={() => saveEmailPreference(email)} 
+                      className="text-primary"
+                    >
                       <Check size={14} />
                     </button>
                   </div>
@@ -68,7 +150,7 @@ const ScheduledReports = () => {
                     onClick={() => setEditingEmail(true)}
                     className="flex items-center gap-1.5 text-xs font-mono text-foreground/70 hover:text-foreground group transition-colors"
                   >
-                    {email}
+                    {email || "Set email address"}
                     <Pencil size={11} className="opacity-0 group-hover:opacity-60 transition-opacity" />
                   </button>
                 )}

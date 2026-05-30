@@ -16,6 +16,7 @@ export interface ReportData {
   monthlyData: Array<{ month: string; total: number }>
   insights: string[]
   challenges?: Array<{ title: string; progress: number; saving: string }>
+  householdData?: Array<{ memberName: string; role: string; total: number }>
   includeSections?: Set<string>
 }
 
@@ -386,6 +387,46 @@ export const generatePDF = (data: ReportData): void => {
 
       y += 22
     })
+  }
+
+  // ── Household Data ─────────────────────────────────────────
+  if (data.householdData && data.householdData.length > 0 &&
+      (!data.includeSections || data.includeSections.has("Household data"))) {
+    
+    if (y + 30 > PAGE_H - 20) { doc.addPage(); drawHeader(doc, data.period, data.username); y = 48 }
+    y = sectionTitle(doc, "Household Emissions", y)
+
+    const maxHTotal = Math.max(...data.householdData.map(m => m.total), 1)
+    const maxBarW = PAGE_W - MARGIN * 2 - 80
+
+    data.householdData.forEach((m) => {
+      if (y + 12 > PAGE_H - 20) { doc.addPage(); drawHeader(doc, data.period, data.username); y = 48 }
+
+      doc.setFontSize(9)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(...C.black)
+      doc.text(m.memberName, MARGIN, y)
+
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(7)
+      doc.setTextColor(...C.grey)
+      doc.text(`(${m.role})`, MARGIN, y + 4)
+
+      // Progress bar
+      doc.setFillColor(...C.bgCard)
+      doc.roundedRect(MARGIN + 35, y - 3.5, maxBarW, 4.5, 1, 1, "F")
+      
+      const barW = Math.max(1, (m.total / maxHTotal) * maxBarW)
+      doc.setFillColor(...C.green)
+      doc.roundedRect(MARGIN + 35, y - 3.5, barW, 4.5, 1, 1, "F")
+
+      doc.setFontSize(8)
+      doc.setTextColor(...C.black)
+      doc.text(`${Math.round(m.total)} kg`, PAGE_W - MARGIN, y, { align: "right" })
+
+      y += 12
+    })
+    y += 5
   }
 
   // ── Footer on all pages ───────────────────────────────

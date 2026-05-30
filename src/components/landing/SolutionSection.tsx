@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, Brain, Flame, Users } from "lucide-react";
+import { Calendar, Brain, Flame, Users, HelpCircle } from "lucide-react";
 
 const features = [
   { icon: Calendar, title: "Daily granularity", desc: "Track food, travel, energy, shopping per day — not per year." },
@@ -20,22 +20,25 @@ const SolutionSection = () => (
         CarbonLedger is <span className="text-gradient-green">different.</span>
       </motion.h2>
       <div className="mt-16 flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin">
-        {features.map((f, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="glass-card rounded-xl p-6 min-w-[280px] flex-shrink-0 snap-center"
-          >
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-              <f.icon className="text-primary" size={24} />
-            </div>
-            <h3 className="font-heading font-600 text-foreground text-lg mb-2">{f.title}</h3>
-            <p className="text-muted-foreground text-sm">{f.desc}</p>
-          </motion.div>
-        ))}
+        {features.filter(Boolean).map((f, i) => {
+          const IconComponent = f?.icon || HelpCircle;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass-card rounded-xl p-6 min-w-[280px] flex-shrink-0 snap-center"
+            >
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <IconComponent className="text-primary" size={24} />
+              </div>
+              <h3 className="font-heading font-600 text-foreground text-lg mb-2">{f?.title || "Feature"}</h3>
+              <p className="text-muted-foreground text-sm">{f?.desc || ""}</p>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   </section>

@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Plus, Leaf } from "lucide-react";
+import { Bell, Plus, Leaf, Trophy, TrendingDown, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { formatDistanceToNow } from "date-fns";
 
 const quickCategories = [
   { label: "Food", emoji: "🍔" },
@@ -11,14 +13,24 @@ const quickCategories = [
   { label: "Shopping", emoji: "🛍️" },
 ];
 
-// TODO: Fetch real notifications from Supabase
-const notifications: any[] = [];
-
 const DashboardHeader = () => {
   const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const { data: entries } = useDashboardData();
+
+  const notifications = (entries || [])
+    .slice(0, 5)
+    .map((entry, index) => ({
+      id: entry.id,
+      icon: Leaf,
+      color: "text-primary",
+      title: "Activity Logged",
+      desc: `You logged ${entry.co2_kg}kg CO2 for ${entry.category?.toLowerCase() || 'activity'}.`,
+      time: entry.logged_at ? formatDistanceToNow(new Date(entry.logged_at), { addSuffix: true }) : "recently",
+      unread: index === 0,
+    }));
 
   const displayName = user?.user_metadata?.display_name || user?.email || "U";
   const initial = displayName.charAt(0).toUpperCase();

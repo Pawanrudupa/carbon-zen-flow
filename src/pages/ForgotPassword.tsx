@@ -1,26 +1,25 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Leaf, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Leaf, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const navigate = useNavigate();
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
     setLoading(false);
     if (error) {
       toast.error(error.message);
     } else {
-      setSent(true);
+      toast.success("Check your email for the 6-digit code!");
+      navigate("/update-password", { state: { email } });
     }
   };
 
@@ -51,77 +50,46 @@ const ForgotPassword = () => {
               Reset Password
             </h1>
             <p className="text-muted-foreground text-sm text-center max-w-xs">
-              Enter your email and we'll send you a link to reset your password.
+              Enter your email and we'll send you a 6-digit code to reset your password.
             </p>
           </div>
 
-          <AnimatePresence mode="wait">
-            {sent ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-4 py-4 text-center"
-              >
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CheckCircle className="text-primary" size={32} />
-                </div>
-                <div>
-                  <p className="text-foreground font-semibold">Check your inbox</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    We sent a password reset link to{" "}
-                    <span className="font-mono text-primary">{email}</span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => { setSent(false); setEmail(""); }}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                >
-                  Send again with a different email
-                </button>
-              </motion.div>
-            ) : (
-              <motion.form
-                key="form"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onSubmit={handleReset}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <input
-                      id="reset-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 font-body transition-colors"
-                    />
-                  </div>
-                </div>
+          <motion.form
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onSubmit={handleReset}
+            className="space-y-4"
+          >
+            <div>
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1.5 block">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 font-body transition-colors"
+                />
+              </div>
+            </div>
 
-                <button
-                  type="submit"
-                  id="reset-submit"
-                  disabled={loading}
-                  className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                  {loading ? "Sending…" : "Send Reset Link"}
-                </button>
-              </motion.form>
-            )}
-          </AnimatePresence>
+            <button
+              type="submit"
+              id="reset-submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {loading ? "Sending…" : "Send 6-Digit Code"}
+            </button>
+          </motion.form>
 
           {/* Back to login */}
           <div className="text-center">

@@ -8,6 +8,7 @@ export interface CSVData {
   }>
   categoryTotals: Array<{ label: string; value: number; pct: number }>
   total: number
+  householdData?: Array<{ memberName: string; role: string; total: number }>
 }
 
 function escapeCSV(value: string | number): string {
@@ -50,6 +51,17 @@ export const generateCSV = (data: CSVData): void => {
     })
     lines.push(row(date, e.category, e.description || "", e.co2_kg?.toFixed(2) ?? "0.00"))
   })
+  lines.push("")
+
+  // ── Household Data ────────────────────────────────────
+  if (data.householdData && data.householdData.length > 0) {
+    lines.push("HOUSEHOLD EMISSIONS")
+    lines.push(row("Member", "Role", "Total CO₂ (kg)"))
+    data.householdData.forEach(m => {
+      lines.push(row(m.memberName, m.role, m.total.toFixed(2)))
+    })
+    lines.push("")
+  }
 
   // ── Build blob and trigger download ──────────────────
   const csv = lines.join("\n")

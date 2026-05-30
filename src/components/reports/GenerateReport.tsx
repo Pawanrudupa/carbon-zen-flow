@@ -160,6 +160,50 @@ const GenerateReport = () => {
       const prevTotal = (prevEntries || []).reduce((s: number, e: any) => s + (e.co2_kg || 0), 0);
       const delta = prevTotal > 0 ? Math.round(((total - prevTotal) / prevTotal) * 100) : 0;
 
+      // 1. Check if household data is requested
+      let householdData: Array<{ memberName: string; role: string; total: number }> | undefined;
+      if (selected.has("Household data")) {
+        // Find household for this user securely
+        const { data: hmData, error: hmError } = await supabase
+          .from("household_members")
+          .select("household_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+          
+        if (!hmError && hmData) {
+          const { data: members } = await supabase
+            .from("household_members")
+            .select("user_id, role, profiles(username)")
+            .eq("household_id", hmData.household_id);
+            
+          if (members && members.length > 0) {
+            const memberIds = members.map((m: any) => m.user_id);
+            
+            let hq = supabase
+              .from("entries")
+              .select("user_id, co2_kg")
+              .in("user_id", memberIds)
+              .gte("logged_at", startDate);
+            if (period === "Last Month") {
+              hq = hq.lt("logged_at", endDate);
+            }
+            const { data: hEntries } = await hq;
+            
+            householdData = members.map((m: any) => {
+              const mEntries = (hEntries || []).filter((e: any) => e.user_id === m.user_id);
+              const mTotal = mEntries.reduce((s: number, e: any) => s + (e.co2_kg || 0), 0);
+              return {
+                memberName: Array.isArray(m.profiles) ? m.profiles[0]?.username : (m.profiles?.username || "Unknown"),
+                role: m.role,
+                total: mTotal
+              };
+            });
+            // Sort by total descending
+            householdData.sort((a, b) => b.total - a.total);
+          }
+        }
+      }
+
       // Save report record
       const { error: saveError } = await supabase
         .from("reports" as any)
@@ -168,7 +212,7 @@ const GenerateReport = () => {
           period,
           format: format.toUpperCase(),
           file_size_kb: Math.round(total * 0.9 + 100),
-          data: { entries, total, sections: Array.from(selected) },
+          data: { entries, total, householdData, sections: Array.from(selected) },
         });
       if (saveError) throw saveError;
 
@@ -184,6 +228,7 @@ const GenerateReport = () => {
           entries: entries || [],
           categoryTotals,
           monthlyData,
+          householdData,
           insights: [
             "Weekend food emissions are typically 2.3× higher than weekdays. Try meal prepping on Sundays.",
             `You logged ${(entries || []).length} entries over this period, averaging ${((entries || []).length / 30).toFixed(1)} entries per day.`,
@@ -198,6 +243,7 @@ const GenerateReport = () => {
           entries: entries || [],
           categoryTotals,
           total,
+          householdData,
         });
         toast.success("CSV generated and downloaded!");
       }

@@ -1,53 +1,35 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Bot } from "lucide-react";
+import { Sparkles, Bot, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const insights = [
-  {
-    type: "PATTERN",
-    text: "Weekend food emissions are 2.3× higher than weekdays. Try meal prepping Sundays.",
-    color: "text-chart-amber",
-    bg: "bg-chart-amber/10",
-  },
-  {
-    type: "ACTION",
-    text: "Switch 2 car trips to transit this week to save ~4.2 kg CO₂.",
-    color: "text-primary",
-    bg: "bg-primary/10",
-  },
-  {
-    type: "FORECAST",
-    text: "On track to finish at 340 kg — 15% under target.",
-    color: "text-info",
-    bg: "bg-info/10",
-  },
-];
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const mockResponses: Record<string, string> = {
-  "biggest source":
-    "🚗 **Transport** is your biggest source at **42%** of total emissions (143 kg this month). Daily car commutes account for 78% of that. Switching to public transit even 2 days/week could cut transport emissions by ~35%.",
-  "reduce transport":
-    "Here are 3 high-impact moves:\n\n1. **Bike or walk** trips under 3 km — saves ~1.2 kg CO₂/trip\n2. **Carpool** on your commute — cuts per-person emissions by 50%\n3. **Batch errands** into one trip instead of multiple short drives\n\nEstimated savings: **18–25 kg CO₂/month**.",
-  "food":
-    "🥩 **Meat & dairy** make up 68% of your food footprint. Your weekend dining-out pattern spikes emissions 2.3× above weekday levels. Try one plant-based day per week — that alone saves ~8 kg CO₂/month.",
-  "energy":
-    "⚡ Your home energy sits at **87 kWh/week**, slightly above average. Heating is the top driver (61%). Lowering your thermostat by 2°C could save ~12% on energy emissions and ~€15/month.",
-  "shopping":
-    "🛍️ Last month you logged 6 new-item purchases. Buying **pre-owned** reduces per-item emissions by ~70%. Your best swap: that new jacket (12.4 kg CO₂) could have been 3.7 kg secondhand.",
-  "target":
-    "📊 You're currently at **285 kg** with 12 days left — pacing at **340 kg** for the month. Your target is 400 kg, so you're **15% under target**. Keep it up!",
-  "tips":
-    "Top 3 quick wins this week:\n\n1. 🚌 Take transit Tuesday & Thursday → save 4.2 kg\n2. 🥗 Swap 2 meat meals for plant-based → save 3.1 kg\n3. 🔌 Unplug standby devices overnight → save 0.8 kg\n\n**Total potential: ~8 kg CO₂ saved.**",
-};
+type ChatRole = "user" | "ai";
+type MessageStatus = "ok" | "error";
 
-const findResponse = (query: string): string => {
-  const q = query.toLowerCase();
-  for (const [key, response] of Object.entries(mockResponses)) {
-    if (q.includes(key)) return response;
-  }
-  return `Based on your data, your monthly average is **340 kg CO₂**. Transport (42%) and food (31%) are your primary contributors. Would you like specific tips for either category?`;
-};
+interface ChatMessage {
+  role: ChatRole;
+  text: string;
+  status?: MessageStatus;
+}
+
+/** Shape of what the Edge Function returns on success */
+interface AIChatSuccessResponse {
+  response: string;
+}
+
+/** Shape of what the Edge Function returns on failure */
+interface AIChatErrorResponse {
+  error: string;
+}
+
+type AIChatResponse = AIChatSuccessResponse | AIChatErrorResponse;
+
+
+
+// ─── Animations (unchanged) ──────────────────────────────────────────────────
 
 const cardVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -58,30 +40,161 @@ const cardVariant = {
   }),
 };
 
-interface ChatMessage {
-  role: "user" | "ai";
-  text: string;
-}
+// ─── Error bubble text ────────────────────────────────────────────────────────
+
+const ERROR_MESSAGE_SESSION = "You need to be logged in to use the AI assistant.";
+const ERROR_MESSAGE_GENERIC = "Insight engine currently syncing. Try again in a moment.";
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const AIInsightPanel = () => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+  
+  // Dynamic Cards State
+  const [cardInsights, setCardInsights] = useState<{ pattern: string; action: string; forecast: string } | null>(null);
+  const [isCardsLoading, setIsCardsLoading] = useState<boolean>(true);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter" || !query.trim()) return;
-    const userMsg = query.trim();
-    setQuery("");
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
-    setIsTyping(true);
+  // ─── Fetch Cards on Mount ───────────────────────────────────────────────────
+  React.useEffect(() => {
+    let isMounted = true;
+    
+    const fetchCards = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) return;
 
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "ai", text: findResponse(userMsg) }]);
-      setIsTyping(false);
-      setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
-    }, 800 + Math.random() * 600);
-  };
+        const { data, error } = await supabase.functions.invoke<AIChatResponse>("ai-chat", {
+          body: { query: "", type: "cards" },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (error) throw error;
+        if (!isMounted) return;
+
+        if (data && !("error" in data)) {
+          const rawText = (data as AIChatSuccessResponse).response;
+          // The edge function might return markdown blocks if it disobeyed, so safely strip if needed
+          const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanJson);
+          
+          setCardInsights({
+            pattern: parsed.pattern || "Pattern data unavailable.",
+            action: parsed.action || "Action data unavailable.",
+            forecast: parsed.forecast || "Forecast data unavailable.",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load AI cards:", err);
+      } finally {
+        if (isMounted) setIsCardsLoading(false);
+      }
+    };
+
+    fetchCards();
+    return () => { isMounted = false; };
+  }, []);
+
+  /** Smooth-scroll the chat thread to the bottom */
+  const scrollToBottom = useCallback(() => {
+    setTimeout(
+      () =>
+        scrollRef.current?.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth",
+        }),
+      50
+    );
+  }, []);
+
+  /** Append an AI error bubble without crashing the React tree */
+  const appendErrorBubble = useCallback((message: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { role: "ai", text: message, status: "error" },
+    ]);
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Enter" || !query.trim() || isTyping) return;
+
+      const userMsg = query.trim();
+      setQuery("");
+
+      // Optimistically append the user message
+      const updatedMessages: ChatMessage[] = [
+        ...messages,
+        { role: "user", text: userMsg, status: "ok" },
+      ];
+      setMessages(updatedMessages);
+      setIsTyping(true);
+      scrollToBottom();
+
+      try {
+        // Explicitly fetch session and inject the token — most reliable approach
+        // as supabase.functions.invoke auto-injection can fail if session isn't
+        // hydrated yet at call time.
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          throw new Error("NO_SESSION");
+        }
+
+        const { data, error: fnError } = await supabase.functions.invoke<AIChatResponse>(
+          "ai-chat",
+          {
+            body: { query: userMsg },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
+        );
+
+        if (fnError) {
+          console.error("Edge Function invocation error:", fnError);
+          throw fnError;
+        }
+
+        // ── 4. Type-narrow the response
+        if (!data) {
+          throw new Error("Edge Function returned an empty payload.");
+        }
+
+        if ("error" in data) {
+          // Server returned a structured error — surface gracefully
+          console.error("Edge Function returned error payload:", data.error);
+          throw new Error(data.error);
+        }
+
+        const reply = (data as AIChatSuccessResponse).response;
+        if (!reply || typeof reply !== "string") {
+          throw new Error("Malformed reply from AI service.");
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: reply, status: "ok" },
+        ]);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("AI connection error:", message);
+
+        appendErrorBubble(
+          message === "NO_SESSION" ? ERROR_MESSAGE_SESSION : ERROR_MESSAGE_GENERIC
+        );
+      } finally {
+        setIsTyping(false);
+        scrollToBottom();
+      }
+    },
+    [query, messages, isTyping, scrollToBottom, appendErrorBubble]
+  );
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="glass-card rounded-xl p-5 flex flex-col">
@@ -100,24 +213,51 @@ const AIInsightPanel = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-        {insights.map((ins, i) => (
-          <motion.div
-            key={i}
-            className="glass-card rounded-lg p-4 group hover:border-primary/20 transition-colors"
-            variants={cardVariant}
-            initial="hidden"
-            animate="show"
-            custom={i}
-            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-          >
-            <span className={`font-mono text-[9px] uppercase tracking-[0.15em] ${ins.color} ${ins.bg} px-1.5 py-0.5 rounded`}>
-              {ins.type}
-            </span>
-            <p className="text-foreground/60 text-[11px] mt-2 leading-relaxed">{ins.text}</p>
-          </motion.div>
-        ))}
-      </div>
+      {(() => {
+        const displayInsights = [
+          {
+            type: "PATTERN",
+            text: cardInsights?.pattern || "Scanning 30-day emission patterns...",
+            color: "text-chart-amber",
+            bg: "bg-chart-amber/10",
+          },
+          {
+            type: "ACTION",
+            text: cardInsights?.action || "Computing high-impact reduction strategies...",
+            color: "text-primary",
+            bg: "bg-primary/10",
+          },
+          {
+            type: "FORECAST",
+            text: cardInsights?.forecast || "Projecting month-end carbon footprint...",
+            color: "text-info",
+            bg: "bg-info/10",
+          },
+        ];
+
+        return (
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isCardsLoading ? 'opacity-60 animate-pulse' : ''}`}>
+            {displayInsights.map((ins, i) => (
+              <motion.div
+                key={i}
+                className="glass-card rounded-lg p-4 group hover:border-primary/20 transition-colors"
+                variants={cardVariant}
+                initial="hidden"
+                animate="show"
+                custom={i}
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+              >
+                <span
+                  className={`font-mono text-[9px] uppercase tracking-[0.15em] ${ins.color} ${ins.bg} px-1.5 py-0.5 rounded`}
+                >
+                  {ins.type}
+                </span>
+                <p className="text-foreground/60 text-[11px] mt-2 leading-relaxed">{ins.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Chat thread */}
       <AnimatePresence>
@@ -137,14 +277,26 @@ const AIInsightPanel = () => {
                 className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {msg.role === "ai" && (
-                  <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot size={10} className="text-primary" />
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      msg.status === "error"
+                        ? "bg-destructive/15"
+                        : "bg-primary/15"
+                    }`}
+                  >
+                    {msg.status === "error" ? (
+                      <AlertTriangle size={10} className="text-destructive" />
+                    ) : (
+                      <Bot size={10} className="text-primary" />
+                    )}
                   </div>
                 )}
                 <div
                   className={`rounded-lg px-3 py-2 text-[11px] leading-relaxed max-w-[80%] whitespace-pre-line ${
                     msg.role === "user"
                       ? "bg-primary/15 text-foreground/80"
+                      : msg.status === "error"
+                      ? "bg-destructive/10 text-destructive/80 border border-destructive/20"
                       : "bg-muted/30 text-foreground/70 border border-primary/5"
                   }`}
                 >
@@ -152,6 +304,8 @@ const AIInsightPanel = () => {
                 </div>
               </motion.div>
             ))}
+
+            {/* Typing indicator — Framer Motion pulse dots (unchanged animation) */}
             {isTyping && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -182,8 +336,9 @@ const AIInsightPanel = () => {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleSubmit}
+        disabled={isTyping}
         placeholder="Ask your data anything…"
-        className="w-full px-3 py-2 rounded-lg bg-input border border-primary/10 text-foreground text-[11px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-colors"
+        className="w-full px-3 py-2 rounded-lg bg-input border border-primary/10 text-foreground text-[11px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-colors disabled:opacity-50"
       />
     </div>
   );

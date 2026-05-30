@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -216,5 +218,154 @@
 }
 [data-density="compact"] .mb-4 {
   margin-bottom: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* MISSION CONTROL DESIGN SYSTEM - Phase 1                                  */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* Animated Grid Background */
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
+}
+
+/* Data Flash (for real-time updates) */
+@keyframes data-flash {
+  0% { background-color: rgba(34, 197, 94, 0); }
+  50% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: rgba(34, 197, 94, 0); }
+}
+
+/* Terminal Cursor Blink */
+@keyframes terminal-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Slide Up In (for entries appearing) */
+@keyframes slide-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated gradient shift */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Liquid fill animation */
+@keyframes liquid-fill {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+/* Mission Control Card Style */
+.mission-card {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mission-card:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Status Dot */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.status-dot.green {
+  background-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.amber {
+  background-color: #F59E0B;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.status-dot.red {
+  background-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+/* Terminal Line Style */
+.terminal-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #22C55E;
+  white-space: pre;
+}
+
+.terminal-cursor::after {
+  content: '▊';
+  animation: terminal-blink 1s infinite;
+  margin-left: 2px;
+}
+
+/* Animated Gradient Text */
+.gradient-text-animated {
+  background: linear-gradient(90deg, #22C55E, #3B82F6, #22C55E);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Grid Pattern Background */
+.grid-background {
+  background-image:
+    linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: grid-pulse 4s ease-in-out infinite;
+}
+
+/* Liquid Fill Bar */
+.liquid-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(34, 197, 94, 0.3),
+    transparent
+  );
+  animation: liquid-fill 2s ease-out;
+}
+
+/* Monospace Number Display */
+.mono-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 

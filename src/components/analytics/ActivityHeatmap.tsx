@@ -69,11 +69,11 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
 
   return (
     <div className="glass-card rounded-xl p-5">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-1">
         Daily activity
       </h3>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto pt-6 -mt-2">
         <div className="inline-flex flex-col">
           {/* Month labels top — computed from actual date range */}
           <div className="relative flex ml-[28px] mb-1 h-4">
@@ -125,7 +125,7 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
                     >
                       {hovered === idx && (
                         <div
-                          className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-mono text-foreground whitespace-nowrap z-20 shadow-lg"
+                          className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-mono text-foreground whitespace-nowrap z-50 shadow-lg"
                           style={{ background: "#111A14", border: "1px solid rgba(34,197,94,0.2)" }}
                         >
                           {getTooltip(idx)}

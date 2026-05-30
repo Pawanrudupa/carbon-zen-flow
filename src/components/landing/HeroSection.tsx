@@ -2,12 +2,13 @@ import { motion } from "framer-motion";
 import ParticleHero from "./ParticleHero";
 import { ArrowRight, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
+import LiveImpactStream from "../ui/LiveImpactStream";
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <ParticleHero />
-      <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl mx-auto">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl mx-auto pt-28 md:pt-36">
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -42,7 +43,7 @@ const HeroSection = () => {
           </Link>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg border border-primary/30 text-primary font-heading font-600 text-base transition-all hover:bg-primary/10 hover:border-primary/50"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg border border-white/20 bg-background/50 backdrop-blur-md text-primary font-heading font-600 text-base transition-all hover:bg-primary/10 hover:border-primary/50"
           >
             <Eye size={18} /> See the Dashboard
           </Link>
@@ -99,6 +100,11 @@ const HeroSection = () => {
               </div>
             </div>
           </div>
+          
+          <div className="mt-12 flex justify-center w-full relative z-20">
+            <LiveImpactStream />
+          </div>
+          
           <div className="h-24 bg-gradient-to-b from-transparent to-background" />
         </motion.div>
       </div>

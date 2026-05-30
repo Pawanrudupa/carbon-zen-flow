@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BarChart3, Target, Brain } from "lucide-react";
+import { BarChart3, Target, Brain, HelpCircle } from "lucide-react";
 
 const problems = [
   {
@@ -32,21 +32,24 @@ const ProblemSection = () => (
         <span className="text-destructive">actually looks like.</span>
       </motion.h2>
       <div className="mt-16 grid md:grid-cols-3 gap-6">
-        {problems.map((p, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.15 }}
-            className="glass-card rounded-xl p-6 border-destructive/20 hover:border-destructive/30"
-            style={{ borderColor: "rgba(248,113,113,0.15)" }}
-          >
-            <p.icon className="text-destructive mb-4" size={28} />
-            <h3 className="font-heading font-600 text-foreground text-lg mb-2">{p.title}</h3>
-            <p className="text-muted-foreground text-sm">{p.desc}</p>
-          </motion.div>
-        ))}
+        {problems.filter(Boolean).map((p, i) => {
+          const IconComponent = p?.icon || HelpCircle;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.15 }}
+              className="glass-card rounded-xl p-6 border-destructive/20 hover:border-destructive/30"
+              style={{ borderColor: "rgba(248,113,113,0.15)" }}
+            >
+              <IconComponent className="text-destructive mb-4" size={28} />
+              <h3 className="font-heading font-600 text-foreground text-lg mb-2">{p?.title || "Problem"}</h3>
+              <p className="text-muted-foreground text-sm">{p?.desc || ""}</p>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   </section>
