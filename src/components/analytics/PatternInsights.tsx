@@ -11,7 +11,11 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
 
   useEffect(() => {
     try {
-      if (!entries || entries.length < 7) {
+      if (!entries || entries.length === 0) {
+        return;
+      }
+
+      if (entries.length < 7) {
         setBiggestWin({ title: "Keep tracking to unlock your biggest wins!", savedKg: 0, equivalentKm: 0, dateString: "" });
         // Calculate basic forecast even with few entries
       }
@@ -19,7 +23,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
       // A. Forecast Logic
       const now = new Date();
       let currentMonthSum = 0;
-      entries?.forEach(e => {
+      entries.forEach(e => {
         const d = new Date(e.logged_at);
         if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
           currentMonthSum += e.co2_kg;
@@ -36,7 +40,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
       setForecastState({ projectedKg, targetKg, overUnder, isOver });
 
       // B. Biggest Single Win Logic
-      if (entries && entries.length >= 7) {
+      if (entries.length >= 7) {
         const sorted = [...entries].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime());
         const firstDate = new Date(sorted[0].logged_at);
         const lastDate = new Date(sorted[sorted.length - 1].logged_at);
@@ -99,6 +103,19 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
     let currentMonthSum = 0;
     const now = new Date();
 
+    if (!entries || entries.length === 0) {
+      return {
+        weekdayData: days.map(day => ({ day, avg: 0 })),
+        maxAvg: 1,
+        bestDay: "N/A",
+        minAvg: 0,
+        currentMonthSum: 0,
+        forecast: 0,
+        diff: 350,
+        target: 350
+      };
+    }
+
     entries.forEach((e) => {
       const d = new Date(e.logged_at);
       const dow = d.getDay();
@@ -144,6 +161,28 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
   }, [entries]);
 
   const { weekdayData, maxAvg, bestDay, minAvg, forecast, diff, target } = insights;
+
+  if (!entries || entries.length === 0) {
+    return (
+      <div>
+        <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+          Pattern analysis
+        </h3>
+        <div className="glass-card rounded-xl p-8 flex flex-col items-center justify-center text-center min-h-[220px]">
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary animate-pulse">
+            <span className="text-xl">📊</span>
+          </div>
+          <h4 className="text-sm font-semibold text-foreground/90 mb-1">
+            Log your first entry to see your forecast!
+          </h4>
+          <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+            We will project your month-end emissions, highlight your biggest weekly wins, and analyze your greenest days once you record your first activity.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">

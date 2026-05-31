@@ -106,6 +106,13 @@ serve(async (req) => {
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text()
+      const status = geminiResponse.status
+      if (status === 429 || errorText.includes("RESOURCE_EXHAUSTED") || errorText.includes("rate limit")) {
+        return new Response(JSON.stringify({ error: `RESOURCE_EXHAUSTED: ${errorText}` }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
       throw new Error(`Gemini API failed: ${errorText}`)
     }
 
@@ -119,8 +126,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Edge Function Error:", error.message)
+    const isRateLimit = error.message.includes("429") || error.message.includes("RESOURCE_EXHAUSTED") || error.message.includes("rate limit");
+    const status = isRateLimit ? 429 : 400;
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

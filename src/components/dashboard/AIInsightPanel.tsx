@@ -181,11 +181,24 @@ const AIInsightPanel = () => {
         ]);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error("AI connection error:", message);
+        console.error("AI connection error:", err);
 
-        appendErrorBubble(
-          message === "NO_SESSION" ? ERROR_MESSAGE_SESSION : ERROR_MESSAGE_GENERIC
-        );
+        const isRateLimit = 
+          (err as any)?.status === 429 || 
+          message.includes("429") || 
+          message.includes("RESOURCE_EXHAUSTED") ||
+          message.includes("rate limit");
+
+        if (isRateLimit) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "ai", text: "Carbon AI is taking a quick breather. I'll be back in a minute!", status: "ok" },
+          ]);
+        } else {
+          appendErrorBubble(
+            message === "NO_SESSION" ? ERROR_MESSAGE_SESSION : ERROR_MESSAGE_GENERIC
+          );
+        }
       } finally {
         setIsTyping(false);
         scrollToBottom();
