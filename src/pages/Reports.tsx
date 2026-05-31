@@ -30,10 +30,10 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-background">
       <DashboardSidebar />
-      <div className="ml-16 min-h-screen flex flex-col">
+      <div className="ml-0 md:ml-16 min-h-screen flex flex-col w-full overflow-x-hidden px-4 md:px-0">
         <DashboardHeader />
         <motion.main
-          className="flex-1 p-5 md:p-8 overflow-auto"
+          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
           variants={stagger}
           initial="hidden"
           animate="show"

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Plus, Leaf, Trophy, TrendingDown, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bell, Plus, Leaf, Trophy, TrendingDown, AlertTriangle, Menu, X, Users, FileText, Settings, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -16,9 +16,16 @@ const quickCategories = [
 const DashboardHeader = () => {
   const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: entries } = useDashboardData();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const notifications = (entries || [])
     .slice(0, 5)
@@ -46,12 +53,20 @@ const DashboardHeader = () => {
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-primary/10 bg-background/80 backdrop-blur-md sticky top-0 z-30">
-      <div className="flex items-center gap-3">
-        <Leaf className="text-primary md:hidden" size={18} />
-        <span className="font-heading font-600 text-foreground text-sm hidden md:inline">CarbonLedger</span>
-        <span className="text-muted-foreground text-xs font-mono hidden md:inline">/ {month}</span>
-      </div>
+    <>
+      <header className="h-14 flex items-center justify-between px-6 border-b border-primary/10 bg-background/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="p-1.5 rounded-lg hover:bg-muted/30 transition-colors md:hidden mr-1"
+            aria-label="Open menu"
+          >
+            <Menu size={18} className="text-foreground" />
+          </button>
+          <Leaf className="text-primary" size={18} />
+          <span className="font-heading font-600 text-foreground text-sm hidden md:inline">CarbonLedger</span>
+          <span className="text-muted-foreground text-xs font-mono hidden md:inline">/ {month}</span>
+        </div>
 
       <div className="flex items-center gap-2">
         {quickCategories.map((c) => (
@@ -155,7 +170,95 @@ const DashboardHeader = () => {
         </div>
       </div>
     </header>
-  );
+
+    {/* Slide-out mobile drawer backdrop & drawer */}
+    <AnimatePresence>
+      {menuOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+          />
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed left-0 top-0 bottom-0 w-[280px] bg-card border-r border-primary/10 p-6 z-50 flex flex-col md:hidden shadow-2xl"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2">
+                <Leaf className="text-primary" size={18} />
+                <span className="font-heading font-700 text-foreground text-sm">CarbonLedger</span>
+              </div>
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted/30 transition-colors"
+              >
+                <X size={18} className="text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Navigation links */}
+            <nav className="flex-1 flex flex-col gap-4">
+              <Link
+                to="/household"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-all font-medium"
+              >
+                <Users size={18} />
+                <span>Household</span>
+              </Link>
+              <Link
+                to="/reports"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-all font-medium"
+              >
+                <FileText size={18} />
+                <span>Reports</span>
+              </Link>
+              <Link
+                to="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-all font-medium"
+              >
+                <Settings size={18} />
+                <span>Settings</span>
+              </Link>
+            </nav>
+
+            {/* User profile & Sign Out at bottom */}
+            <div className="border-t border-primary/10 pt-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-primary font-heading font-700 text-xs">{initial}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors font-medium text-left"
+              >
+                <LogOut size={16} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  </>
+);
 };
 
 export default DashboardHeader;

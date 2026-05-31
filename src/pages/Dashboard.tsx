@@ -14,10 +14,10 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <DashboardSidebar />
-      <div className="ml-16 md:ml-20 min-h-screen flex flex-col transition-all duration-300">
+      <div className="ml-0 md:ml-16 lg:ml-20 min-h-screen flex flex-col transition-all duration-300 w-full overflow-x-hidden px-4 md:px-0">
         <DashboardHeader />
         <motion.main
-          className="flex-1 p-5 md:p-8 overflow-auto"
+          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
           variants={pageVariants}
           initial="initial"
           animate="animate"

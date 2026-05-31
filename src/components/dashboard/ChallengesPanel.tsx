@@ -68,7 +68,7 @@ const ChallengesPanel = () => {
   });
 
   return (
-    <div className="glass-card rounded-xl p-5 h-full flex flex-col">
+    <div className="glass-card rounded-xl p-5 min-h-[16rem] h-auto md:h-full flex flex-col">
       <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
         Challenges
       </h3>
