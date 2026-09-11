@@ -10,7 +10,16 @@ import AppearanceSection from "@/components/settings/AppearanceSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import BillingSection from "@/components/settings/BillingSection";
 import DangerZoneSection from "@/components/settings/DangerZoneSection";
-import { MODEL_META } from "@/utils/mlModel";
+// Fallback model metadata — used when the ML chunk fails to load.
+// Must stay in sync with mlModel.ts MODEL_META.
+export const MODEL_META_FALLBACK = {
+  algorithm: "GradientBoostingRegressor",
+  r2_score: 0.9950,
+  mae_kg: 4.134,
+  training_samples: 4000,
+  dataset:
+    "Synthetic dataset based on IPCC AR6 emission factors, EPA guidelines, and IEA energy data",
+} as const;
 
 const sections: Record<string, React.FC> = {
   profile: ProfileSection,
@@ -23,6 +32,23 @@ const sections: Record<string, React.FC> = {
 };
 
 const Settings = () => {
+  const [modelMeta, setModelMeta] = useState(MODEL_META_FALLBACK);
+
+  useEffect(() => {
+    import("@/utils/mlModel")
+      .then((mod) => {
+        setModelMeta({
+          algorithm: mod.MODEL_META.algorithm,
+          r2_score: mod.MODEL_META.r2_score,
+          mae_kg: mod.MODEL_META.mae_kg,
+          training_samples: mod.MODEL_META.training_samples,
+          dataset: mod.MODEL_META.dataset,
+        });
+      })
+      .catch((err) => {
+        console.error("Settings: failed to load ML module, using fallback metadata:", err);
+      });
+  }, []);
   const [searchParams] = useSearchParams();
   const [active, setActive] = useState(() => {
     const section = searchParams.get("section");
@@ -68,15 +94,15 @@ const Settings = () => {
             </div>
             <div className="flex justify-between items-center py-2 border-b border-primary/5">
               <span className="text-sm text-muted-foreground">R² Score (accuracy)</span>
-              <span className="font-mono text-xs text-primary">{MODEL_META.r2_score} / 1.0</span>
+              <span className="font-mono text-xs text-primary">{modelMeta.r2_score} / 1.0</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-primary/5">
               <span className="text-sm text-muted-foreground">Mean Absolute Error</span>
-              <span className="font-mono text-xs text-primary">±{MODEL_META.mae_kg} kg CO₂</span>
+              <span className="font-mono text-xs text-primary">±{modelMeta.mae_kg} kg CO₂</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-primary/5">
               <span className="text-sm text-muted-foreground">Training samples</span>
-              <span className="font-mono text-xs text-primary">{MODEL_META.training_samples.toLocaleString()}</span>
+              <span className="font-mono text-xs text-primary">{modelMeta.training_samples.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-primary/5">
               <span className="text-sm text-muted-foreground">Emission features</span>
@@ -84,7 +110,7 @@ const Settings = () => {
             </div>
             <div className="pt-2 space-y-1.5">
               <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
-                {MODEL_META.dataset}. Model trained offline using scikit-learn
+                {modelMeta.dataset}. Model trained offline using scikit-learn
                 and coefficients extracted for real-time browser inference.
               </p>
               <p className="text-[11px] text-muted-foreground/60 leading-relaxed">

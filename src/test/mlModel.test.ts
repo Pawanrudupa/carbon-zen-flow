@@ -165,3 +165,17 @@ describe("ML Emission Estimation Model", () => {
     expect(cachedResult).toEqual({ loaded: true });
   });
 });
+
+describe("MODEL_META_FALLBACK sync check", () => {
+  it("Settings fallback metadata matches the real MODEL_META", async () => {
+    const { MODEL_META_FALLBACK } = await import("@/pages/Settings");
+
+    // Every key in the fallback must exist in MODEL_META with the same value.
+    // This test fails loudly if someone updates mlModel.ts but forgets Settings.tsx.
+    expect(MODEL_META_FALLBACK.algorithm).toBe(MODEL_META.algorithm);
+    expect(MODEL_META_FALLBACK.r2_score).toBe(MODEL_META.r2_score);
+    expect(MODEL_META_FALLBACK.mae_kg).toBe(MODEL_META.mae_kg);
+    expect(MODEL_META_FALLBACK.training_samples).toBe(MODEL_META.training_samples);
+    expect(MODEL_META_FALLBACK.dataset).toBe(MODEL_META.dataset);
+  });
+});
