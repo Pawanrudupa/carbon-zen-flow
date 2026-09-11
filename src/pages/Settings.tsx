@@ -10,6 +10,7 @@ import AppearanceSection from "@/components/settings/AppearanceSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import BillingSection from "@/components/settings/BillingSection";
 import DangerZoneSection from "@/components/settings/DangerZoneSection";
+import { MODEL_META } from "@/utils/mlModel";
 
 const sections: Record<string, React.FC> = {
   profile: ProfileSection,
@@ -54,6 +55,43 @@ const Settings = () => {
           >
             <Section />
           </motion.div>
+        </div>
+
+        {/* ML Model Section */}
+        <div className="mt-10 rounded-xl border p-5" style={{ borderColor: "rgba(34,197,94,0.12)" }}>
+          <h3 className="font-semibold text-sm mb-4">AI & ML Emission Model</h3>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-primary/5">
+              <span className="text-sm text-muted-foreground">Algorithm</span>
+              <span className="font-mono text-xs text-primary">GradientBoostingRegressor</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-primary/5">
+              <span className="text-sm text-muted-foreground">R² Score (accuracy)</span>
+              <span className="font-mono text-xs text-primary">{MODEL_META.r2_score} / 1.0</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-primary/5">
+              <span className="text-sm text-muted-foreground">Mean Absolute Error</span>
+              <span className="font-mono text-xs text-primary">±{MODEL_META.mae_kg} kg CO₂</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-primary/5">
+              <span className="text-sm text-muted-foreground">Training samples</span>
+              <span className="font-mono text-xs text-primary">{MODEL_META.training_samples.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-primary/5">
+              <span className="text-sm text-muted-foreground">Emission features</span>
+              <span className="font-mono text-xs text-primary">13 input variables</span>
+            </div>
+            <div className="pt-2 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+                {MODEL_META.dataset}. Model trained offline using scikit-learn
+                and coefficients extracted for real-time browser inference.
+              </p>
+              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+                Trained on a synthetic dataset generated from IPCC AR6 / EPA / IEA emission factors, not live-measured emissions. Coefficients are static and do not update from user data.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
