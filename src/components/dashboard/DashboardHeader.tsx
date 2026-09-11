@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Bell, Plus, Leaf, Menu, X, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { formatDistanceToNow } from "date-fns";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { navItems } from "./DashboardSidebar";
 
 const quickCategories = [
@@ -22,7 +23,6 @@ const DashboardHeader = ({ onOpenMobileMenu }: DashboardHeaderProps = {}) => {
   const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: entries } = useDashboardData();
   const navigate = useNavigate();
@@ -47,14 +47,6 @@ const DashboardHeader = ({ onOpenMobileMenu }: DashboardHeaderProps = {}) => {
 
   const displayName = user?.user_metadata?.display_name || user?.email || "U";
   const initial = displayName.charAt(0).toUpperCase();
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
@@ -100,79 +92,75 @@ const DashboardHeader = ({ onOpenMobileMenu }: DashboardHeaderProps = {}) => {
       </div>
 
       <div className="flex items-center gap-3">
-        <div ref={ref} className="relative">
-          <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="relative p-2 rounded-lg hover:bg-muted/30 transition-colors"
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className="relative p-2 rounded-lg hover:bg-muted/30 transition-colors"
+              aria-label="View notifications"
+            >
+              <Bell size={16} className="text-muted-foreground" />
+              {unreadCount > 0 && (
+                <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+              )}
+            </button>
+          </PopoverTrigger>
+
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="w-80 p-0 bg-card border border-primary/10 rounded-xl shadow-2xl overflow-hidden z-50"
           >
-            <Bell size={16} className="text-muted-foreground" />
-            {unreadCount > 0 && (
-              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
-            )}
-          </button>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-primary/5">
+              <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+              {unreadCount > 0 && (
+                <span className="text-xs font-mono font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
 
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                transition={{ duration: 0.2 }}
-                className="absolute right-0 top-full mt-2 w-80 bg-card border border-primary/10 rounded-xl shadow-2xl overflow-hidden z-50"
-              >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-primary/5">
-                  <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <span className="text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      {unreadCount} new
-                    </span>
-                  )}
+            <div className="max-h-[340px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center flex flex-col items-center justify-center">
+                  <Bell size={24} className="text-muted-foreground/30 mb-2" />
+                  <p className="text-sm font-medium text-foreground">No new notifications</p>
+                  <p className="text-xs text-muted-foreground mt-1">You're all caught up!</p>
                 </div>
-
-                <div className="max-h-[340px] overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center flex flex-col items-center justify-center">
-                      <Bell size={24} className="text-muted-foreground/30 mb-2" />
-                      <p className="text-sm font-medium text-foreground">No new notifications</p>
-                      <p className="text-xs text-muted-foreground mt-1">You're all caught up!</p>
-                    </div>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors border-b border-primary/5 last:border-0 ${
-                          n.unread ? "bg-primary/[0.03]" : ""
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <n.icon size={14} className={n.color} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
-                            {n.unread && <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">{n.desc}</p>
-                          <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{n.time}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {notifications.length > 0 && (
-                  <Link
-                    to="/settings"
-                    onClick={() => setOpen(false)}
-                    className="block text-center text-xs text-primary hover:underline py-2.5 border-t border-primary/5"
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors border-b border-primary/5 last:border-0 ${
+                      n.unread ? "bg-primary/[0.03]" : ""
+                    }`}
                   >
-                    Notification settings
-                  </Link>
-                )}
-              </motion.div>
+                    <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <n.icon size={14} className={n.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
+                        {n.unread && <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{n.desc}</p>
+                      <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{n.time}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {notifications.length > 0 && (
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="block text-center text-xs text-primary hover:underline py-2.5 border-t border-primary/5"
+              >
+                Notification settings
+              </Link>
             )}
-          </AnimatePresence>
-        </div>
+          </PopoverContent>
+        </Popover>
 
         <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-semibold hidden sm:inline">
           On Track

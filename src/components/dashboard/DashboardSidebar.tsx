@@ -78,24 +78,36 @@ const DashboardSidebar = ({
         }}
       >
         {/* Header / Logo + Collapse Toggle */}
-        <div className="flex items-center justify-between px-3.5 py-4 border-b border-primary/10 min-h-[57px]">
-          <Link to="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+        <div
+          className={`flex items-center border-b border-primary/10 min-h-[57px] relative flex-shrink-0 ${
+            isCollapsed ? "justify-center px-0 py-3" : "justify-between px-3.5 py-3"
+          }`}
+        >
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-2.5 flex-shrink-0 ${isCollapsed ? "justify-center" : "min-w-0"}`}
+            title="CarbonLedger"
+          >
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
               <Leaf size={18} />
             </div>
             {!isCollapsed && (
-              <span className="font-heading font-bold text-foreground text-sm tracking-tight whitespace-nowrap">
+              <span className="font-heading font-bold text-foreground text-sm tracking-tight whitespace-nowrap truncate">
                 CarbonLedger
               </span>
             )}
           </Link>
           <button
             onClick={toggleCollapse}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+            className={`flex items-center justify-center text-muted-foreground hover:text-foreground transition-all flex-shrink-0 ${
+              isCollapsed
+                ? "absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-card border border-primary/30 text-primary shadow-md hover:scale-110 hover:border-primary/60 z-40"
+                : "p-1.5 rounded-md hover:bg-muted/30"
+            }`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={16} />}
           </button>
         </div>
 
@@ -124,7 +136,7 @@ const DashboardSidebar = ({
         </nav>
 
         {/* User Profile & Sign Out Footer */}
-        <div className="p-3 border-t border-primary/10 space-y-2 overflow-hidden">
+        <div className="p-3 border-t border-primary/10 space-y-2 overflow-hidden flex-shrink-0">
           <div className={`flex items-center gap-2.5 ${isCollapsed ? "justify-center" : ""}`}>
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
               <span className="text-primary font-heading font-bold text-xs">{initial}</span>
