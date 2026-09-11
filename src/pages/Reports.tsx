@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import ReportsHeader from "@/components/reports/ReportsHeader";
 import GenerateReport from "@/components/reports/GenerateReport";
 import ReportPreview from "@/components/reports/ReportPreview";
@@ -28,39 +27,35 @@ const Reports = () => {
   const [isPremium] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardSidebar />
-      <div className="ml-0 md:ml-16 min-h-screen flex flex-col w-full overflow-x-hidden px-4 md:px-0">
-        <DashboardHeader />
-        <motion.main
-          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={fadeSlide}>
-            <ReportsHeader isPremium={isPremium} />
+    <DashboardLayout>
+      <motion.div
+        className="w-full max-w-full overflow-x-hidden"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={fadeSlide}>
+          <ReportsHeader isPremium={isPremium} />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+          <GenerateReport />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-8 min-w-0">
+          <ReportPreview />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-8 min-w-0">
+          <ReportHistory />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-8 min-w-0">
+          <ScheduledReports />
+        </motion.div>
+        {!isPremium && (
+          <motion.div variants={fadeSlide} className="mt-8 mb-8 min-w-0">
+            <UpgradeCTA />
           </motion.div>
-          <motion.div variants={fadeSlide} className="mt-6">
-            <GenerateReport />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-8">
-            <ReportPreview />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-8">
-            <ReportHistory />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-8">
-            <ScheduledReports />
-          </motion.div>
-          {!isPremium && (
-            <motion.div variants={fadeSlide} className="mt-8 mb-8">
-              <UpgradeCTA />
-            </motion.div>
-          )}
-        </motion.main>
-      </div>
-    </div>
+        )}
+      </motion.div>
+    </DashboardLayout>
   );
 };
 

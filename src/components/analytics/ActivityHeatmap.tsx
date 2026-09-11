@@ -68,8 +68,8 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
   };
 
   return (
-    <div className="glass-card rounded-xl p-5">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-1">
+    <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-1">
         Daily activity
       </h3>
 

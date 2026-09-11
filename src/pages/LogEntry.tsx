@@ -10,6 +10,7 @@ import FoodForm from "@/components/log-entry/FoodForm";
 import TransportForm from "@/components/log-entry/TransportForm";
 import EnergyForm from "@/components/log-entry/EnergyForm";
 import ShoppingForm from "@/components/log-entry/ShoppingForm";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import type { MLPrediction } from "@/utils/mlModel";
 
 const tabs = [
@@ -274,13 +275,13 @@ const LogEntry = () => {
   const activeColor = tabs.find(t => t.key === activeTab)?.color || "hsl(var(--primary))";
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto w-full">
         <Link to="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground text-sm hover:text-primary transition-colors mb-6">
           <ArrowLeft size={16} /> Back to Dashboard
         </Link>
 
-        <h1 className="font-heading font-700 text-2xl md:text-3xl text-foreground mb-2">Log Entry</h1>
+        <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Log Entry</h1>
         <p className="text-muted-foreground text-sm mb-8">Track your carbon in under 60 seconds.</p>
 
         <div className="flex gap-2 mb-8">
@@ -423,7 +424,7 @@ const LogEntry = () => {
                 {/* Contextual tip */}
                 {mlPrediction.tip && (
                   <div className="px-3 py-2 rounded-lg bg-muted/20 border border-muted/30">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       💡 {mlPrediction.tip}
                     </p>
                   </div>
@@ -432,7 +433,7 @@ const LogEntry = () => {
                 {/* Anomaly Alert or Cold-start note */}
                 {recentEntries && recentEntries.length < 6 ? (
                   <div className="px-3 py-1.5 rounded-lg bg-muted/10 border border-muted/20 text-center">
-                    <p className="text-[10px] font-mono text-muted-foreground/60">
+                    <p className="text-xs font-mono text-muted-foreground/60">
                       Anomaly detection unlocks after 6 logged entries in this category.
                     </p>
                   </div>
@@ -446,12 +447,12 @@ const LogEntry = () => {
                         : "bg-amber-500/10 border-amber-500/30"
                     }`}
                   >
-                    <p className={`text-[11px] font-mono font-semibold ${
+                    <p className={`text-xs font-mono font-semibold ${
                       anomaly.severity === "extreme" ? "text-destructive" : "text-amber-500"
                     }`}>
                       ⚠ Anomaly Detected (z={anomaly.zScore}σ)
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {anomaly.message}
                     </p>
                   </motion.div>
@@ -461,7 +462,7 @@ const LogEntry = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

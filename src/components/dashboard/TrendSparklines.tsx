@@ -34,7 +34,8 @@ const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) 
   }, []);
 
   return (
-    <svg width={w} height={h} className="flex-shrink-0">
+    <div className="w-16 sm:w-28 h-8 flex-1 min-w-0 max-w-[120px] overflow-hidden flex-shrink">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full">
       <defs>
         <linearGradient id={`hb-${color.replace("#", "")}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={color} stopOpacity="0.2" />
@@ -73,6 +74,7 @@ const HeartbeatSparkline = ({ data, color }: { data: number[]; color: string }) 
         filter={`url(#glow-${color.replace("#", "")})`}
       />
     </svg>
+    </div>
   );
 };
 
@@ -128,8 +130,8 @@ const TrendSparklines = () => {
   }, [allEntries]);
 
   return (
-    <div className="glass-card rounded-xl p-5 h-full flex flex-col justify-center">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+    <div className="glass-card rounded-xl p-5 h-full flex flex-col justify-center min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         8-Week Trends
       </h3>
       {isLoading ? (
@@ -143,7 +145,7 @@ const TrendSparklines = () => {
           {categories.map((c, i) => (
             <motion.div
               key={c.name}
-              className="flex items-center gap-3 group"
+              className="flex items-center gap-2 sm:gap-3 group min-w-0"
               variants={rowVariant}
               initial="hidden"
               animate="show"
@@ -158,13 +160,13 @@ const TrendSparklines = () => {
               >
                 <c.icon size={13} style={{ color: c.color }} />
               </motion.div>
-              <span className="text-xs text-foreground/60 w-16 flex-shrink-0 font-medium">{c.name}</span>
+              <span className="text-xs text-foreground/70 w-14 sm:w-16 flex-shrink-0 font-medium">{c.name}</span>
               <HeartbeatSparkline data={c.data} color={c.color} />
-              <span className="font-mono text-xs text-foreground/80 w-12 text-right flex-shrink-0">
+              <span className="font-mono text-xs font-semibold text-foreground/90 w-10 sm:w-12 text-right flex-shrink-0">
                 {c.value}
               </span>
               <span
-                className={`font-mono text-[10px] flex-shrink-0 px-1.5 py-0.5 rounded-md ${
+                className={`font-mono text-xs flex-shrink-0 px-2 py-0.5 rounded-md font-medium ${
                   c.delta < 0
                     ? "text-primary bg-primary/10"
                     : c.delta > 0

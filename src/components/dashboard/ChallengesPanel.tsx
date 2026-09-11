@@ -68,9 +68,9 @@ const ChallengesPanel = () => {
   });
 
   return (
-    <div className="glass-card rounded-xl p-5 min-h-[16rem] h-auto md:h-full flex flex-col">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
-        Challenges
+    <div className="glass-card rounded-xl p-5 min-h-[16rem] h-auto md:h-full flex flex-col min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
+        Active Challenges
       </h3>
       <div className="flex-1 flex flex-col gap-2.5">
         {isLoading ? (
@@ -78,14 +78,14 @@ const ChallengesPanel = () => {
             <div key={i} className="glass-card rounded-lg h-[68px] animate-pulse bg-muted/10 border border-primary/5" />
           ))
         ) : challenges.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground/50 font-mono text-center px-4">
+          <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground/60 font-mono text-center px-4">
             No active challenges. Head over to the challenges page to start one!
           </div>
         ) : (
           challenges.map((c, i) => (
             <motion.div
               key={i}
-              className="glass-card rounded-lg p-3 group hover:border-primary/15 transition-colors"
+              className="glass-card rounded-lg p-3 group hover:border-primary/15 transition-colors min-w-0"
               variants={cardVariant}
               initial="hidden"
               animate="show"
@@ -93,10 +93,10 @@ const ChallengesPanel = () => {
               whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-foreground/80 font-heading font-600 truncate mr-2">{c.name}</span>
-                <span className="font-mono text-[9px] text-muted-foreground/50 whitespace-nowrap">{c.daysLeft}d left</span>
+                <span className="text-xs md:text-sm text-foreground/90 font-heading font-semibold truncate mr-2">{c.name}</span>
+                <span className="font-mono text-xs text-muted-foreground/60 whitespace-nowrap">{c.daysLeft}d left</span>
               </div>
-              <div className="w-full h-1 rounded-full bg-muted/40 overflow-hidden mb-1.5">
+              <div className="w-full h-1.5 rounded-full bg-muted/40 overflow-hidden mb-1.5">
                 <motion.div
                   className="h-full rounded-full bg-primary"
                   initial={{ width: 0 }}
@@ -106,10 +106,10 @@ const ChallengesPanel = () => {
                 />
               </div>
               <div className="flex justify-between">
-                <span className="font-mono text-[9px] text-muted-foreground/50">
+                <span className="font-mono text-xs text-muted-foreground/60">
                   {Math.round(c.progress * 100)}%
                 </span>
-                <span className="font-mono text-[9px] text-primary/70">−{c.saving}</span>
+                <span className="font-mono text-xs text-primary font-medium">−{c.saving}</span>
               </div>
             </motion.div>
           ))
@@ -117,9 +117,9 @@ const ChallengesPanel = () => {
       </div>
       <Link 
         to="/challenges"
-        className="mt-3 text-[10px] text-primary/60 font-heading font-600 hover:text-primary transition-colors block text-center"
+        className="mt-3 text-xs text-primary/80 font-heading font-semibold hover:text-primary transition-colors block text-center"
       >
-        All Challenges →
+        View All Challenges →
       </Link>
     </div>
   );

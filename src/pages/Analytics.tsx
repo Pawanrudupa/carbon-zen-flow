@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import AnalyticsHeader from "@/components/analytics/AnalyticsHeader";
 import TrendChart from "@/components/analytics/TrendChart";
 import CategoryDeepDive from "@/components/analytics/CategoryDeepDive";
@@ -63,55 +62,51 @@ const Analytics = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <DashboardSidebar />
-      <div className="flex-1 ml-0 md:ml-[64px] min-h-screen flex flex-col pb-24 md:pb-0 w-full overflow-x-hidden px-4 md:px-0">
-        <DashboardHeader />
-        <motion.main
-          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={fadeSlide}>
-            <AnalyticsHeader dateRange={dateRange} setDateRange={setDateRange} entries={entries} />
-          </motion.div>
+    <DashboardLayout>
+      <motion.div
+        className="w-full max-w-full overflow-x-hidden"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={fadeSlide}>
+          <AnalyticsHeader dateRange={dateRange} setDateRange={setDateRange} entries={entries} />
+        </motion.div>
 
-          {isLoading ? (
-            <div className="mt-6 space-y-6">
-              <SkeletonCard className="h-64 w-full" />
-              <SkeletonCard className="h-64 w-full" />
-            </div>
-          ) : isError ? (
-            <div className="mt-6">
-              <ErrorCard message="Failed to load analytics data" onRetry={() => refetch()} />
-            </div>
-          ) : (
-            <>
-              <motion.div variants={fadeSlide} className="mt-6">
-                <TrendChart entries={entries} dateRange={dateRange} />
-              </motion.div>
+        {isLoading ? (
+          <div className="mt-6 space-y-6 min-w-0">
+            <SkeletonCard className="h-64 w-full" />
+            <SkeletonCard className="h-64 w-full" />
+          </div>
+        ) : isError ? (
+          <div className="mt-6 min-w-0">
+            <ErrorCard message="Failed to load analytics data" onRetry={() => refetch()} />
+          </div>
+        ) : (
+          <>
+            <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+              <TrendChart entries={entries} dateRange={dateRange} />
+            </motion.div>
 
-              <motion.div variants={fadeSlide} className="mt-6">
-                <CategoryDeepDive entries={entries} />
-              </motion.div>
+            <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+              <CategoryDeepDive entries={entries} />
+            </motion.div>
 
-              <motion.div variants={fadeSlide} className="mt-6">
-                <ActivityHeatmap entries={entries} />
-              </motion.div>
+            <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+              <ActivityHeatmap entries={entries} />
+            </motion.div>
 
-              <motion.div variants={fadeSlide} className="mt-6">
-                <PatternInsights entries={entries} />
-              </motion.div>
+            <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+              <PatternInsights entries={entries} />
+            </motion.div>
 
-              <motion.div variants={fadeSlide} className="mt-6 mb-8">
-                <EntriesTable entries={entries} />
-              </motion.div>
-            </>
-          )}
-        </motion.main>
-      </div>
-    </div>
+            <motion.div variants={fadeSlide} className="mt-6 mb-8 min-w-0">
+              <EntriesTable entries={entries} />
+            </motion.div>
+          </>
+        )}
+      </motion.div>
+    </DashboardLayout>
   );
 };
 

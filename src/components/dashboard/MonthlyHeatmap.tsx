@@ -178,12 +178,13 @@ const MonthlyHeatmap = () => {
   const weeks = 5;
 
   return (
-    <div className="glass-card rounded-xl p-5">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+    <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         Monthly Heatmap
       </h3>
 
-      <div className="inline-flex flex-col">
+      <div className="overflow-x-auto max-w-full pb-1">
+        <div className="inline-flex flex-col min-w-max">
         {/* Week labels top */}
         <div className="flex ml-[28px] mb-[3px]">
           {MONTH_LABELS.map((label) => (
@@ -229,6 +230,7 @@ const MonthlyHeatmap = () => {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Legend */}

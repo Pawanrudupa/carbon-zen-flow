@@ -89,10 +89,10 @@ const AnalyticsHeader = ({ dateRange, setDateRange, entries }: AnalyticsHeaderPr
         {stats.map((s) => (
           <div
             key={s.label}
-            className="glass-card rounded-xl p-4 flex items-center justify-between"
+            className="glass-card rounded-xl p-4 flex items-center justify-between min-w-0 overflow-hidden"
           >
             <div>
-              <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-[0.15em]">{s.label}</p>
+              <p className="text-xs font-mono font-medium text-muted-foreground/80 uppercase tracking-wider">{s.label}</p>
               <p className="font-mono text-lg text-foreground mt-1">{s.value}</p>
             </div>
             <div className="flex items-end gap-[3px] h-8">

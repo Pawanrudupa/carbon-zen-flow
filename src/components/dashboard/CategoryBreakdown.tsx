@@ -49,8 +49,8 @@ const CategoryBreakdown = () => {
   let offset = 0;
 
   return (
-    <div className="glass-card rounded-xl p-5 min-h-[16rem] h-auto md:h-full flex flex-col">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-3">
+    <div className="glass-card rounded-xl p-5 min-h-[16rem] h-auto md:h-full flex flex-col min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-3">
         Category Breakdown
       </h3>
       <div className="flex flex-col md:flex-row items-center justify-center flex-1 gap-6 py-2">
@@ -124,7 +124,7 @@ const CategoryBreakdown = () => {
               {segments.map((seg, i) => (
                 <motion.div
                   key={i}
-                  className="flex items-center gap-2 text-[11px] cursor-pointer"
+                  className="flex items-center gap-2 text-xs cursor-pointer font-medium"
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
                   animate={{ opacity: hovered !== null && hovered !== i ? 0.4 : 1 }}

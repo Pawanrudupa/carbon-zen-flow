@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import ChallengesHeader from "@/components/challenges/ChallengesHeader";
 import ActiveChallenges from "@/components/challenges/ActiveChallenges";
 import AvailableChallenges from "@/components/challenges/AvailableChallenges";
@@ -23,31 +22,27 @@ const fadeSlide = {
 
 const Challenges = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardSidebar />
-      <div className="ml-0 md:ml-16 min-h-screen flex flex-col w-full overflow-x-hidden px-4 md:px-0">
-        <DashboardHeader />
-        <motion.main
-          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={fadeSlide}>
-            <ChallengesHeader />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-6">
-            <ActiveChallenges />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-8">
-            <AvailableChallenges />
-          </motion.div>
-          <motion.div variants={fadeSlide} className="mt-8 mb-8">
-            <CompletedChallenges />
-          </motion.div>
-        </motion.main>
-      </div>
-    </div>
+    <DashboardLayout>
+      <motion.div
+        className="w-full max-w-full overflow-x-hidden"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={fadeSlide}>
+          <ChallengesHeader />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-6 min-w-0">
+          <ActiveChallenges />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-8 min-w-0">
+          <AvailableChallenges />
+        </motion.div>
+        <motion.div variants={fadeSlide} className="mt-8 mb-8 min-w-0">
+          <CompletedChallenges />
+        </motion.div>
+      </motion.div>
+    </DashboardLayout>
   );
 };
 

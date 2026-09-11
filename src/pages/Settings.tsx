@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import { motion } from "framer-motion";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import SettingsNav from "@/components/settings/SettingsNav";
 import ProfileSection from "@/components/settings/ProfileSection";
 import TargetsSection from "@/components/settings/TargetsSection";
@@ -10,6 +10,7 @@ import AppearanceSection from "@/components/settings/AppearanceSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import BillingSection from "@/components/settings/BillingSection";
 import DangerZoneSection from "@/components/settings/DangerZoneSection";
+
 // Fallback model metadata — used when the ML chunk fails to load.
 // Must stay in sync with mlModel.ts MODEL_META.
 export const MODEL_META_FALLBACK = {
@@ -62,11 +63,10 @@ const Settings = () => {
   const Section = sections[active] ?? ProfileSection;
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardSidebar />
-      <main className="ml-0 md:ml-16 p-6 pb-24 md:p-10 max-w-6xl mx-auto w-full overflow-x-hidden px-4 md:px-0">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto w-full">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h1 className="font-heading text-3xl font-bold text-foreground">Settings</h1>
+          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">Settings</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your CarbonLedger experience</p>
         </motion.div>
 
@@ -109,18 +109,18 @@ const Settings = () => {
               <span className="font-mono text-xs text-primary">13 input variables</span>
             </div>
             <div className="pt-2 space-y-1.5">
-              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+              <p className="text-xs text-muted-foreground/70 leading-relaxed">
                 {modelMeta.dataset}. Model trained offline using scikit-learn
                 and coefficients extracted for real-time browser inference.
               </p>
-              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+              <p className="text-xs text-muted-foreground/70 leading-relaxed">
                 Trained on a synthetic dataset generated from IPCC AR6 / EPA / IEA emission factors, not live-measured emissions. Coefficients are static and do not update from user data.
               </p>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

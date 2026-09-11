@@ -66,8 +66,8 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* Stacked bar chart */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+        <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
           Breakdown over time
         </h3>
         <ResponsiveContainer width="100%" height={220}>
@@ -100,7 +100,7 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
         </ResponsiveContainer>
         <div className="flex items-center gap-4 mt-3">
           {cats.map((c) => (
-            <div key={c.key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div key={c.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className="w-2 h-2 rounded-full" style={{ background: c.color }} />
               {c.key}
             </div>
@@ -109,8 +109,8 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
       </div>
 
       {/* Radial rings */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+        <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
           Category comparison
         </h3>
         <div className="flex items-center justify-center gap-8">
@@ -143,15 +143,15 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-mono text-lg font-bold text-foreground">{Math.round(totalAll)} kg</span>
-              <span className="font-mono text-[9px] text-muted-foreground">total</span>
+              <span className="font-mono text-[10px] text-muted-foreground">total</span>
             </div>
           </div>
           <div className="flex flex-col gap-3">
             {cats.map((c) => (
               <div key={c.key} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ background: c.color }} />
-                <span className="text-[11px] text-muted-foreground w-16">{c.key}</span>
-                <span className="font-mono text-[11px] text-foreground">{c.pct}%</span>
+                <span className="text-xs text-muted-foreground w-16">{c.key}</span>
+                <span className="font-mono text-xs text-foreground">{c.pct}%</span>
               </div>
             ))}
           </div>
