@@ -1,12 +1,17 @@
 import { motion } from "framer-motion";
-import { Car, Bus, TrainFront, Plane, Bike, Users } from "lucide-react";
+import { Car, Bus, TrainFront, Plane, Bike, Users, Zap } from "lucide-react";
 
 const modes = [
-  { key: "car", label: "Car", icon: Car, co2: 0.21, color: "hsl(var(--chart-blue))" },
-  { key: "bus", label: "Bus", icon: Bus, co2: 0.089, color: "hsl(var(--chart-teal))" },
-  { key: "train", label: "Train", icon: TrainFront, co2: 0.041, color: "hsl(var(--primary))" },
-  { key: "flight", label: "Flight", icon: Plane, co2: 0.255, color: "hsl(var(--chart-amber))" },
+  { key: "car_petrol", label: "Car (Petrol)", icon: Car, co2: 0.1815, color: "hsl(var(--chart-blue))" },
+  { key: "car_diesel", label: "Car (Diesel)", icon: Car, co2: 0.1422, color: "hsl(var(--chart-blue))" },
+  { key: "car_electric", label: "Car (Electric)", icon: Zap, co2: 0.1008, color: "hsl(var(--primary))" },
+  { key: "motorcycle", label: "Motorcycle", icon: Bike, co2: 0.0811, color: "hsl(var(--chart-amber))" },
+  { key: "bus", label: "Bus", icon: Bus, co2: 0.1066, color: "hsl(var(--chart-teal))" },
+  { key: "train", label: "Train", icon: TrainFront, co2: 0.0671, color: "hsl(var(--primary))" },
+  { key: "metro", label: "Metro/Subway", icon: TrainFront, co2: 0.0640, color: "hsl(var(--chart-teal))" },
   { key: "cycle", label: "Bicycle", icon: Bike, co2: 0, color: "hsl(var(--primary))" },
+  { key: "flight_domestic", label: "Flight (Domestic)", icon: Plane, co2: 0.1073, color: "hsl(var(--chart-amber))" },
+  { key: "flight_international", label: "Flight (International)", icon: Plane, co2: 0.0876, color: "hsl(var(--destructive))" },
 ];
 
 interface TransportFormProps {
@@ -15,10 +20,15 @@ interface TransportFormProps {
 }
 
 const TransportForm = ({ formData, update }: TransportFormProps) => {
-  const selectedMode = formData.mode || "car";
+  const legacyModeMap: Record<string, string> = {
+    car: "car_petrol",
+    flight: "flight_domestic",
+  };
+  const currentMode = legacyModeMap[formData.mode] || formData.mode || "car_petrol";
+  const selectedMode = modes.some(m => m.key === currentMode) ? currentMode : "car_petrol";
   const distance = parseFloat(formData.distance || "0");
   const passengers = parseInt(formData.passengers || "1");
-  const modeData = modes.find(m => m.key === selectedMode)!;
+  const modeData = modes.find(m => m.key === selectedMode) || modes[0];
 
   return (
     <div className="space-y-6">
