@@ -236,7 +236,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
   if (!entries || entries.length === 0) {
     return (
       <div>
-        <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+        <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
           Pattern analysis
         </h3>
         <div className="glass-card rounded-xl p-8 flex flex-col items-center justify-center text-center min-h-[220px]">
@@ -256,17 +256,17 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
 
   return (
     <div>
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         Pattern analysis
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Card 1 — Best day */}
-        <div className="glass-card rounded-xl p-5">
-          <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-[0.15em] mb-3">Best day of the week</p>
+        <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+          <p className="text-xs font-mono font-medium text-muted-foreground/80 uppercase tracking-wider mb-3">Best day of the week</p>
           <div className="flex flex-col gap-1.5">
             {weekdayData.map((d) => (
               <div key={d.day} className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-muted-foreground w-7">{d.day}</span>
+                <span className="text-xs font-mono text-muted-foreground w-7">{d.day}</span>
                 <div className="flex-1 h-3 bg-muted/20 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
@@ -276,17 +276,17 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
                     transition={{ duration: 0.8, delay: 0.1 }}
                   />
                 </div>
-                <span className="text-[10px] font-mono text-foreground/60 w-8 text-right">{d.avg}</span>
+                <span className="text-xs font-mono text-foreground/60 w-8 text-right">{d.avg}</span>
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-primary/60 mt-2 font-mono">{bestDay} is your greenest day</p>
+          <p className="text-xs text-primary/80 mt-2 font-mono">{bestDay} is your greenest day</p>
         </div>
 
         {/* Card 2 — Biggest win */}
-        <div className="glass-card rounded-xl p-5 flex flex-col justify-between">
+        <div className="glass-card rounded-xl p-5 flex flex-col justify-between min-w-0 overflow-hidden">
           <div>
-            <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-[0.15em] mb-3">Biggest single win</p>
+            <p className="text-xs font-mono font-medium text-muted-foreground/80 uppercase tracking-wider mb-3">Biggest single win</p>
             {biggestWin.savedKg > 0 ? (
               <p className="text-sm text-foreground/80 leading-relaxed">
                 {biggestWin.title} saved <span className="font-mono text-primary font-semibold">{biggestWin.savedKg} kg</span> vs your average.
@@ -299,13 +299,13 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
           {biggestWin.dateString && (
             <div className="mt-4 flex items-center gap-2">
               <span className="text-2xl">🏆</span>
-              <span className="text-[10px] font-mono text-muted-foreground/40">{biggestWin.dateString}</span>
+              <span className="text-xs font-mono text-muted-foreground/60">{biggestWin.dateString}</span>
             </div>
           )}
         </div>
 
         {/* Card 3 — Forecast */}
-        <div className="glass-card rounded-xl p-5 flex flex-col justify-between">
+        <div className="glass-card rounded-xl p-5 flex flex-col justify-between min-w-0 overflow-hidden">
           {moduleLoadFailed ? (
             <div className="flex flex-col items-center justify-center py-6 my-auto text-center space-y-3">
               <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
@@ -331,11 +331,11 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
             <>
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-[0.15em]">
+                  <p className="text-xs font-mono font-medium text-muted-foreground/80 uppercase tracking-wider">
                     {forecast.method === "average" ? "Early Estimate" : "ML Forecast"}
                   </p>
                   {forecast.method === "regression" && (
-                    <span className="text-[9px] font-mono text-primary/40">
+                    <span className="text-[10px] font-mono text-primary/60">
                       Linear Regression · R²={forecast.r2.toFixed(2)}
                     </span>
                   )}
@@ -344,7 +344,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
                   {forecast.recommendation}
                 </p>
                 {forecast.method === "regression" && forecast.slope !== 0 && (
-                  <p className="text-[10px] font-mono text-muted-foreground/50 mt-2">
+                  <p className="text-xs font-mono text-muted-foreground/70 mt-2">
                     Trend: {forecast.slope > 0 ? "+" : ""}{forecast.slope} kg/day
                     {forecast.slope > 0
                       ? " (emissions increasing ⚠)"

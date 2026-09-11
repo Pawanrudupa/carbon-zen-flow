@@ -60,8 +60,8 @@ const EntriesTable = ({ entries }: EntriesTableProps) => {
   const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
   return (
-    <div className="glass-card rounded-xl p-5">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+    <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         All logged entries
       </h3>
 
@@ -104,7 +104,7 @@ const EntriesTable = ({ entries }: EntriesTableProps) => {
           <thead>
             <tr className="border-b border-primary/10">
               {["Date", "Category", "Description", "CO₂ (kg)", "vs avg"].map((h) => (
-                <th key={h} className="text-left py-2 px-3 text-[10px] font-mono text-muted-foreground/50 uppercase tracking-wider font-normal">
+                <th key={h} className="text-left py-2 px-3 text-xs font-mono text-muted-foreground/70 uppercase tracking-wider font-medium">
                   {h}
                 </th>
               ))}

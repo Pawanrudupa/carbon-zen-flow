@@ -210,15 +210,17 @@ const AIInsightPanel = () => {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="glass-card rounded-xl p-5 flex flex-col">
+    <div className="glass-card rounded-xl p-5 flex flex-col min-w-0">
       <div className="flex items-center gap-2 mb-4">
         <motion.div
           animate={{ rotate: [0, 15, -15, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
-          <Sparkles className="text-primary" size={14} />
+          <Sparkles className="text-primary" size={16} />
         </motion.div>
-        <h3 className="font-heading font-600 text-foreground/80 text-xs">AI Insights</h3>
+        <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
+          AI Insights
+        </h3>
         <motion.div
           className="w-1.5 h-1.5 rounded-full bg-primary ml-auto"
           animate={{ opacity: [1, 0.3, 1] }}
@@ -249,11 +251,11 @@ const AIInsightPanel = () => {
         ];
 
         return (
-          <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isCardsLoading ? 'opacity-60 animate-pulse' : ''}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 ${isCardsLoading ? 'opacity-60 animate-pulse' : ''}`}>
             {displayInsights.map((ins, i) => (
               <motion.div
                 key={i}
-                className="glass-card rounded-lg p-4 group hover:border-primary/20 transition-colors"
+                className="glass-card rounded-lg p-4 group hover:border-primary/20 transition-colors min-w-0"
                 variants={cardVariant}
                 initial="hidden"
                 animate="show"
@@ -261,11 +263,11 @@ const AIInsightPanel = () => {
                 whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
               >
                 <span
-                  className={`font-mono text-[9px] uppercase tracking-[0.15em] ${ins.color} ${ins.bg} px-1.5 py-0.5 rounded`}
+                  className={`font-mono text-[10px] uppercase tracking-wider font-semibold ${ins.color} ${ins.bg} px-2 py-0.5 rounded`}
                 >
                   {ins.type}
                 </span>
-                <p className="text-foreground/60 text-[11px] mt-2 leading-relaxed">{ins.text}</p>
+                <p className="text-foreground/75 text-xs mt-2 leading-relaxed font-normal">{ins.text}</p>
               </motion.div>
             ))}
           </div>
@@ -305,12 +307,12 @@ const AIInsightPanel = () => {
                   </div>
                 )}
                 <div
-                  className={`rounded-lg px-3 py-2 text-[11px] leading-relaxed max-w-[80%] whitespace-pre-line ${
+                  className={`rounded-lg px-3 py-2 text-xs leading-relaxed max-w-[80%] whitespace-pre-line ${
                     msg.role === "user"
-                      ? "bg-primary/15 text-foreground/80"
+                      ? "bg-primary/15 text-foreground/80 font-medium"
                       : msg.status === "error"
                       ? "bg-destructive/10 text-destructive/80 border border-destructive/20"
-                      : "bg-muted/30 text-foreground/70 border border-primary/5"
+                      : "bg-muted/30 text-foreground/80 border border-primary/5"
                   }`}
                 >
                   {msg.text.replace(/\*\*(.*?)\*\*/g, "$1")}
@@ -344,15 +346,18 @@ const AIInsightPanel = () => {
         )}
       </AnimatePresence>
 
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleSubmit}
-        disabled={isTyping}
-        placeholder="Ask your data anything…"
-        className="w-full px-3 py-2 rounded-lg bg-input border border-primary/10 text-foreground text-[11px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-colors disabled:opacity-50"
-      />
+      {/* Constrained Input: 600-800px width, centered (Part 5) */}
+      <div className="w-full max-w-[720px] mx-auto mt-1">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleSubmit}
+          disabled={isTyping}
+          placeholder="Ask your data anything…"
+          className="w-full px-4 py-2.5 rounded-lg bg-input border border-primary/20 text-foreground text-xs md:text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-50 shadow-inner"
+        />
+      </div>
     </div>
   );
 };

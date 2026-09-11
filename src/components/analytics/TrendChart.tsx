@@ -83,8 +83,8 @@ const TrendChart = ({ entries, dateRange }: TrendChartProps) => {
   const lineColor = categories.find((c) => c.key === activeCategory)?.color || "#22C55E";
 
   return (
-    <div className="glass-card rounded-xl p-5">
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+    <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         {dateRange === "This Month" ? "Daily emissions over time" : "Monthly emissions over time"}
       </h3>
 

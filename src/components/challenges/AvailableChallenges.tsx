@@ -87,7 +87,7 @@ const ChallengeCard = ({
       variants={fadeUp}
       whileHover={{ y: -4, boxShadow: `0 8px 32px ${styles.glow}` }}
       transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className={`glass-card rounded-xl p-5 flex flex-col relative overflow-hidden border ${styles.border}`}
+      className={`glass-card rounded-xl p-5 flex flex-col relative overflow-hidden min-w-0 border ${styles.border}`}
       style={{ minHeight: 200 }}
     >
       {/* Featured gradient border shimmer */}
@@ -264,7 +264,7 @@ const AvailableChallenges = () => {
 
   return (
     <div>
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         Start a new challenge
       </h3>
 
@@ -335,7 +335,7 @@ const AvailableChallenges = () => {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Star size={12} className="text-[hsl(38,95%,51%)]" />
-            <span className="text-[10px] font-mono text-[hsl(38,95%,51%)] uppercase tracking-widest">
+            <span className="text-xs font-mono font-medium text-[hsl(38,95%,51%)] uppercase tracking-wider">
               Featured
             </span>
           </div>

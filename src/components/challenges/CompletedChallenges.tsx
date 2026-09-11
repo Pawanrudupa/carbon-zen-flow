@@ -79,7 +79,7 @@ const CompletedChallenges = () => {
 
   return (
     <div>
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         Your Victories — Completed ({count})
       </h3>
 

@@ -222,7 +222,7 @@ const ActiveChallenges = () => {
 
   return (
     <div>
-      <h3 className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+      <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
         Active Challenges ({activeChallenges.length})
       </h3>
 
@@ -314,7 +314,7 @@ const ActiveChallenges = () => {
             <motion.div
               key={c.ucId}
               variants={fadeUp}
-              className="glass-card rounded-xl p-5 relative overflow-hidden"
+              className="glass-card rounded-xl p-5 relative overflow-hidden min-w-0"
               whileHover={{ boxShadow: `0 4px 24px ${c.colors.glow}` }}
             >
               {/* Mini ring top-right */}

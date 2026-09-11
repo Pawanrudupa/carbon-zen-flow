@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import HouseholdHeader from "@/components/household/HouseholdHeader";
 import HouseholdOverview from "@/components/household/HouseholdOverview";
 import MemberCards from "@/components/household/MemberCards";
@@ -192,16 +191,13 @@ const Household = () => {
   const isOwner = membership?.role === "owner";
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <DashboardSidebar />
-      <div className="flex-1 ml-0 md:ml-[64px] min-h-screen flex flex-col pb-24 md:pb-0 w-full overflow-x-hidden px-4 md:px-0">
-        <DashboardHeader />
-        <motion.main
-          className="flex-1 p-5 pb-24 md:p-8 overflow-auto"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
+    <DashboardLayout>
+      <motion.div
+        className="w-full max-w-full overflow-x-hidden"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
           {isLoading ? (
             <div className="space-y-6">
               <SkeletonCard className="h-32" />
@@ -364,18 +360,17 @@ const Household = () => {
               </motion.div>
             </>
           )}
-        </motion.main>
-      </div>
+        </motion.div>
 
-      {membership && (
-        <InviteModal
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
-          householdId={membership.household_id}
-        />
-      )}
-    </div>
-  );
-};
+        {membership && (
+          <InviteModal
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+            householdId={membership.household_id}
+          />
+        )}
+      </DashboardLayout>
+    );
+  };
 
 export default Household;
