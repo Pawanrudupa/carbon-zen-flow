@@ -24,6 +24,9 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cz_oauth_in_progress", "true");
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -31,6 +34,9 @@ const Login = () => {
       },
     });
     if (error) {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("cz_oauth_in_progress");
+      }
       toast.error(error.message);
       setLoading(false);
     }

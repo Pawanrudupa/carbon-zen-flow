@@ -1,9 +1,11 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ─── Accent colour palette ─── */
 export type AccentId = "green" | "teal" | "blue" | "purple" | "amber";
 
-interface AccentTokens {
+export interface AccentTokens {
   primary: string;        // HSL values (no hsl() wrapper)
   secondary: string;
   ring: string;
@@ -61,6 +63,21 @@ export const ACCENT_MAP: Record<AccentId, AccentTokens> = {
   },
 };
 
+export const GREEN_THEME_TOKENS = ACCENT_MAP.green;
+
+export const GREEN_THEME_STYLE: React.CSSProperties = {
+  "--primary": GREEN_THEME_TOKENS.primary,
+  "--secondary": GREEN_THEME_TOKENS.secondary,
+  "--ring": GREEN_THEME_TOKENS.ring,
+  "--sidebar-primary": GREEN_THEME_TOKENS.sidebarPrimary,
+  "--sidebar-ring": GREEN_THEME_TOKENS.sidebarRing,
+  "--muted-foreground": GREEN_THEME_TOKENS.mutedForeground,
+  "--border": `${GREEN_THEME_TOKENS.primary.split(" ")[0]} ${GREEN_THEME_TOKENS.primary.split(" ")[1]} 25% / 0.15`,
+  "--sidebar-border": `${GREEN_THEME_TOKENS.primary.split(" ")[0]} ${GREEN_THEME_TOKENS.primary.split(" ")[1]} 25% / 0.15`,
+  "--glow-primary": `0 0 30px rgba(${GREEN_THEME_TOKENS.glowRgb}, 0.15)`,
+  "--glow-primary-strong": `0 0 40px rgba(${GREEN_THEME_TOKENS.glowRgb}, 0.25)`,
+} as React.CSSProperties;
+
 /* ─── Data density ─── */
 export type Density = "comfortable" | "compact";
 
@@ -75,8 +92,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /* ─── Apply helpers ─── */
-function applyAccent(id: AccentId) {
-  const tokens = ACCENT_MAP[id];
+export function applyAccent(id: AccentId) {
+  const tokens = ACCENT_MAP[id] || ACCENT_MAP.green;
   const root = document.documentElement;
 
   root.style.setProperty("--primary", tokens.primary);
@@ -92,33 +109,131 @@ function applyAccent(id: AccentId) {
   root.style.setProperty("--glow-primary-strong", `0 0 40px rgba(${tokens.glowRgb}, 0.25)`);
 }
 
-function applyDensity(d: Density) {
+export function applyGreenThemeToRoot() {
+  applyAccent("green");
+}
+
+export function applyDensity(d: Density) {
   document.documentElement.setAttribute("data-density", d);
 }
 
+const getUserStorageKey = (userId: string, key: "accent" | "density") => `cz-${key}-${userId}`;
+
 /* ─── Provider ─── */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [accent, setAccentState] = useState<AccentId>(() => {
-    return (localStorage.getItem("cz-accent") as AccentId) || "green";
-  });
+  const { user } = useAuth();
 
-  const [density, setDensityState] = useState<Density>(() => {
-    return (localStorage.getItem("cz-density") as Density) || "comfortable";
-  });
+  const [accent, setAccentState] = useState<AccentId>("green");
+  const [density, setDensityState] = useState<Density>("comfortable");
 
-  // Apply on mount and when values change
+  // Sync with user state (login / switch accounts / logout)
   useEffect(() => {
-    applyAccent(accent);
-    localStorage.setItem("cz-accent", accent);
-  }, [accent]);
+    // Clean up legacy non-namespaced keys to avoid cross-user contamination
+    if (localStorage.getItem("cz-accent")) {
+      localStorage.removeItem("cz-accent");
+    }
+    if (localStorage.getItem("cz-density")) {
+      localStorage.removeItem("cz-density");
+    }
 
-  useEffect(() => {
-    applyDensity(density);
-    localStorage.setItem("cz-density", density);
-  }, [density]);
+    if (!user) {
+      // Unauthenticated state: always default to green & comfortable
+      setAccentState("green");
+      setDensityState("comfortable");
+      applyAccent("green");
+      applyDensity("comfortable");
+      return;
+    }
 
-  const setAccent = (id: AccentId) => setAccentState(id);
-  const setDensity = (d: Density) => setDensityState(d);
+    const userId = user.id;
+    const cachedAccent = (localStorage.getItem(getUserStorageKey(userId, "accent")) as AccentId) || null;
+    const metaAccent = (user.user_metadata?.theme_color as AccentId) || null;
+    const resolvedAccent: AccentId = (cachedAccent && ACCENT_MAP[cachedAccent] ? cachedAccent : null) ||
+                                     (metaAccent && ACCENT_MAP[metaAccent] ? metaAccent : null) ||
+                                     "green";
+
+    const cachedDensity = (localStorage.getItem(getUserStorageKey(userId, "density")) as Density) || null;
+    const metaDensity = (user.user_metadata?.density as Density) || null;
+    const resolvedDensity: Density = (cachedDensity === "compact" || cachedDensity === "comfortable" ? cachedDensity : null) ||
+                                      (metaDensity === "compact" || metaDensity === "comfortable" ? metaDensity : null) ||
+                                      "comfortable";
+
+    setAccentState(resolvedAccent);
+    setDensityState(resolvedDensity);
+    applyAccent(resolvedAccent);
+    applyDensity(resolvedDensity);
+
+    // Save to user-scoped local storage if missing
+    localStorage.setItem(getUserStorageKey(userId, "accent"), resolvedAccent);
+    localStorage.setItem(getUserStorageKey(userId, "density"), resolvedDensity);
+
+    // Also attempt to fetch from profiles table if column exists
+    supabase
+      .from("profiles")
+      .select("theme_color, density")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          const dbData = data as { theme_color?: string; density?: string };
+          if (dbData.theme_color && ACCENT_MAP[dbData.theme_color as AccentId]) {
+            const dbAccent = dbData.theme_color as AccentId;
+            setAccentState(dbAccent);
+            applyAccent(dbAccent);
+            localStorage.setItem(getUserStorageKey(userId, "accent"), dbAccent);
+          }
+          if (dbData.density === "compact" || dbData.density === "comfortable") {
+            setDensityState(dbData.density);
+            applyDensity(dbData.density);
+            localStorage.setItem(getUserStorageKey(userId, "density"), dbData.density);
+          }
+        }
+      })
+      .catch(() => {
+        // Gracefully ignore if column does not exist on remote profiles table
+      });
+  }, [user]);
+
+  const setAccent = useCallback((id: AccentId) => {
+    if (!ACCENT_MAP[id]) return;
+    setAccentState(id);
+    applyAccent(id);
+
+    if (user?.id) {
+      localStorage.setItem(getUserStorageKey(user.id, "accent"), id);
+      // Persist to user_metadata on Supabase auth (travels across devices)
+      supabase.auth.updateUser({ data: { theme_color: id } }).catch((err) => {
+        console.warn("Failed to persist theme to auth user metadata:", err);
+      });
+      // Also try saving to profiles table if supported
+      supabase
+        .from("profiles")
+        .update({ theme_color: id } as any)
+        .eq("id", user.id)
+        .then()
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const setDensity = useCallback((d: Density) => {
+    setDensityState(d);
+    applyDensity(d);
+
+    if (user?.id) {
+      localStorage.setItem(getUserStorageKey(user.id, "density"), d);
+      // Persist to user_metadata on Supabase auth
+      supabase.auth.updateUser({ data: { density: d } }).catch((err) => {
+        console.warn("Failed to persist density to auth user metadata:", err);
+      });
+      // Also try saving to profiles table if supported
+      supabase
+        .from("profiles")
+        .update({ density: d } as any)
+        .eq("id", user.id)
+        .then()
+        .catch(() => {});
+    }
+  }, [user]);
 
   return (
     <ThemeContext.Provider value={{ accent, setAccent, density, setDensity }}>

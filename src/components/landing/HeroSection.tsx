@@ -56,8 +56,8 @@ const HeroSection = () => {
           className="mt-10 flex flex-wrap gap-3 justify-center"
         >
           {[
-            "🌍 2,400+ users",
-            "📉 Avg. -23% emissions in 30 days",
+            "🌱 Personal & household tracking",
+            "📊 Actionable carbon reduction",
             "⚡ AI-powered insights",
           ].map((pill) => (
             <span
@@ -77,26 +77,31 @@ const HeroSection = () => {
           className="mt-16 w-full max-w-3xl"
         >
           <div className="glass-card rounded-xl p-4 border border-primary/20 shadow-[0_0_60px_rgba(34,197,94,0.1)]">
-            <div className="flex gap-2 mb-3">
-              <div className="w-3 h-3 rounded-full bg-destructive/60" />
-              <div className="w-3 h-3 rounded-full bg-warning/60" />
-              <div className="w-3 h-3 rounded-full bg-primary/60" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-destructive/60" />
+                <div className="w-3 h-3 rounded-full bg-warning/60" />
+                <div className="w-3 h-3 rounded-full bg-primary/60" />
+              </div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-primary/80 bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                Sample preview
+              </span>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="glass-card rounded-lg p-4 flex flex-col items-center">
                 <span className="text-xs font-mono text-muted-foreground uppercase">This Month</span>
                 <span className="text-2xl font-mono font-bold text-primary mt-1">312 kg</span>
-                <span className="text-xs font-mono text-primary/60 mt-1">-18% vs last</span>
+                <span className="text-xs font-mono text-primary/60 mt-1">Sample pace</span>
               </div>
               <div className="glass-card rounded-lg p-4 flex flex-col items-center">
                 <span className="text-xs font-mono text-muted-foreground uppercase">Daily Avg</span>
                 <span className="text-2xl font-mono font-bold text-foreground mt-1">10.4 kg</span>
-                <span className="text-xs font-mono text-chart-amber mt-1">▼ 2.1 kg</span>
+                <span className="text-xs font-mono text-chart-amber mt-1">Simulated daily</span>
               </div>
               <div className="glass-card rounded-lg p-4 flex flex-col items-center">
                 <span className="text-xs font-mono text-muted-foreground uppercase">Streak</span>
                 <span className="text-2xl font-mono font-bold text-foreground mt-1">14 days</span>
-                <span className="text-xs font-mono text-primary mt-1">🔥 personal best</span>
+                <span className="text-xs font-mono text-primary mt-1">Demo streak</span>
               </div>
             </div>
           </div>

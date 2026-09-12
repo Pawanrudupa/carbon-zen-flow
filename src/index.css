@@ -59,6 +59,19 @@
     --sidebar-border: 142 71% 25% / 0.15;
     --sidebar-ring: 142 71% 45%;
   }
+
+  .landing-theme {
+    --primary: 142 71% 45%;
+    --secondary: 142 64% 37%;
+    --ring: 142 71% 45%;
+    --sidebar-primary: 142 71% 45%;
+    --sidebar-ring: 142 71% 45%;
+    --muted-foreground: 142 69% 58%;
+    --border: 142 71% 25% / 0.15;
+    --sidebar-border: 142 71% 25% / 0.15;
+    --glow-primary: 0 0 30px rgba(34, 197, 94, 0.15);
+    --glow-primary-strong: 0 0 40px rgba(34, 197, 94, 0.25);
+  }
 }
 
 @layer base {

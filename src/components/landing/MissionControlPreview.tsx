@@ -12,9 +12,9 @@ const MissionControlPreview = () => {
   const [currentActivity, setCurrentActivity] = useState(0);
   const [loading, setLoading] = useState(false);
   const [heroStats, setHeroStats] = useState({ 
-    monthTotal: 312, monthTrend: "-18%",
-    dailyAvg: 18.4, dailyTrend: "▼2.1",
-    streak: 14, streakTrend: "🔥 best",
+    monthTotal: 312, monthTrend: "sample",
+    dailyAvg: 18.4, dailyTrend: "sample",
+    streak: 14, streakTrend: "sample",
     isRealData: false
   });
 
@@ -98,9 +98,9 @@ const MissionControlPreview = () => {
         fetchRealStats();
       } else if (event === "SIGNED_OUT" && isMounted) {
         setHeroStats({ 
-          monthTotal: 312, monthTrend: "-18%", 
-          dailyAvg: 18.4, dailyTrend: "▼2.1", 
-          streak: 14, streakTrend: "🔥 best",
+          monthTotal: 312, monthTrend: "sample", 
+          dailyAvg: 18.4, dailyTrend: "sample", 
+          streak: 14, streakTrend: "sample",
           isRealData: false 
         });
       }
@@ -129,7 +129,7 @@ const MissionControlPreview = () => {
         <div className="flex items-center gap-2 ml-auto">
           <span className="status-dot green" />
           <span className="font-mono text-[10px] text-green-400 uppercase tracking-widest">
-            LIVE TRACKING
+            SAMPLE PREVIEW
           </span>
         </div>
       </div>
