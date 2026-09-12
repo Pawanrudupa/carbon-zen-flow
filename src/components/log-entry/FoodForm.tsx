@@ -93,6 +93,7 @@ const FoodForm = ({ formData, update }: FoodFormProps) => {
           Meal Description
         </label>
         <input
+          value={formData.desc || ""}
           className="w-full px-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 font-body transition-colors"
           placeholder="e.g. Grilled chicken with rice and salad"
           onChange={(e) => update("desc", e.target.value)}
