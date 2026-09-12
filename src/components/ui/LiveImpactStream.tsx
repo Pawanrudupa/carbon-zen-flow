@@ -2,22 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Activity, CheckCircle, Zap, Leaf } from 'lucide-react';
 
-// Simulated live data feed
+// Simulated sample preview feed
 const MOCK_EVENTS = [
-  { text: "Syncing household data...", icon: <Activity className="w-4 h-4 text-blue-400" />, type: "system" },
-  { text: "Green Squad saved 42kg CO2 today. [VERIFIED]", icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, type: "success" },
-  { text: "Anomaly detected: Energy usage spike.", icon: <Zap className="w-4 h-4 text-amber-400" />, type: "warning" },
-  { text: "Recalculating global offset metrics...", icon: <Activity className="w-4 h-4 text-blue-400" />, type: "system" },
-  { text: "New custom challenge accepted by household.", icon: <Leaf className="w-4 h-4 text-emerald-400" />, type: "success" },
-  { text: "Transport emissions dropped 12% this week.", icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, type: "success" },
-  { text: "Awaiting new log entries...", icon: <Terminal className="w-4 h-4 text-gray-500" />, type: "system" },
+  { text: "Sample feed: tracking active categories...", icon: <Activity className="w-4 h-4 text-blue-400" />, type: "system" },
+  { text: "Example log: Commute via electric train.", icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, type: "success" },
+  { text: "Pattern insight: Peak home energy window.", icon: <Zap className="w-4 h-4 text-amber-400" />, type: "warning" },
+  { text: "Recalculating personalized footprint benchmark...", icon: <Activity className="w-4 h-4 text-blue-400" />, type: "system" },
+  { text: "Challenge accepted: Plant-forward meals.", icon: <Leaf className="w-4 h-4 text-emerald-400" />, type: "success" },
+  { text: "Goal milestone: 10% transport reduction target.", icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, type: "success" },
+  { text: "Ready for your daily entry...", icon: <Terminal className="w-4 h-4 text-gray-500" />, type: "system" },
 ];
 
 export default function LiveImpactStream() {
   const [logs, setLogs] = useState<typeof MOCK_EVENTS>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Simulates a live websocket or database stream
+  // Simulates an activity stream for preview
   useEffect(() => {
     let currentIndex = 0;
     
@@ -57,14 +57,13 @@ export default function LiveImpactStream() {
       <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
         <div className="flex items-center gap-2">
           <Terminal className="w-4 h-4 text-emerald-500" />
-          <span className="text-xs font-semibold text-gray-300 tracking-wider">LIVE_IMPACT_STREAM</span>
+          <span className="text-xs font-semibold text-gray-300 tracking-wider">ACTIVITY_FEED_PREVIEW</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span className="text-[10px] text-emerald-500 tracking-widest uppercase">Connected</span>
+          <span className="text-[10px] text-emerald-500 tracking-widest uppercase">Sample Preview</span>
         </div>
       </div>
 
