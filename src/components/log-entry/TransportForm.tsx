@@ -80,11 +80,13 @@ const TransportForm = ({ formData, update }: TransportFormProps) => {
           </div>
           <div className="flex-1 space-y-5">
             <input
+              value={formData.from || ""}
               className="w-full px-4 py-2.5 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 font-body transition-colors"
               placeholder="Starting point"
               onChange={(e) => update("from", e.target.value)}
             />
             <input
+              value={formData.to || ""}
               className="w-full px-4 py-2.5 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 font-body transition-colors"
               placeholder="Destination"
               onChange={(e) => update("to", e.target.value)}

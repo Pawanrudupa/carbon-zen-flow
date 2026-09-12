@@ -74,6 +74,7 @@ const ShoppingForm = ({ formData, update }: ShoppingFormProps) => {
           Item Description
         </label>
         <input
+          value={formData.itemDesc || ""}
           className="w-full px-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 font-body transition-colors"
           placeholder={`e.g. ${selected === "clothing" ? "Winter jacket" : selected === "electronics" ? "Wireless headphones" : selected === "furniture" ? "Desk lamp" : "Novel"}`}
           onChange={(e) => update("itemDesc", e.target.value)}

@@ -11,6 +11,8 @@ import TransportForm from "@/components/log-entry/TransportForm";
 import EnergyForm from "@/components/log-entry/EnergyForm";
 import ShoppingForm from "@/components/log-entry/ShoppingForm";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import QuickLogInput from "@/components/log-entry/QuickLogInput";
+import type { QuickLogCategory, QuickLogConfidence } from "@/services/quickLogService";
 import type { MLPrediction } from "@/utils/mlModel";
 
 const tabs = [
@@ -47,11 +49,27 @@ function getMlModel(): Promise<typeof import("@/utils/mlModel")> {
 const LogEntry = () => {
   const [activeTab, setActiveTab] = useState("food");
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [quickLogConfidence, setQuickLogConfidence] = useState<QuickLogConfidence | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const handleQuickLogParsed = (data: {
+    activeTab: QuickLogCategory;
+    formData: Record<string, string>;
+    confidence: QuickLogConfidence;
+  }) => {
+    setActiveTab(data.activeTab);
+    setFormData(data.formData);
+    setQuickLogConfidence(data.confidence);
+  };
+
+  const handleQuickLogClear = () => {
+    setQuickLogConfidence(null);
+    setFormData({});
+  };
 
   // ML model dynamic loading & prediction state
   const [mlModule, setMlModule] = useState<typeof import("@/utils/mlModel") | null>(() => cachedMlModule);
@@ -268,10 +286,13 @@ const LogEntry = () => {
       queryClient.invalidateQueries({ queryKey: ["analytics-entries"] });
       setFormData({});
       setNotes("");
+      setQuickLogConfidence(null);
     }
   };
 
-  const update = (key: string, value: string) => setFormData((p) => ({ ...p, [key]: value }));
+  const update = (key: string, value: string) => {
+    setFormData((p) => ({ ...p, [key]: value }));
+  };
   const activeColor = tabs.find(t => t.key === activeTab)?.color || "hsl(var(--primary))";
 
   return (
@@ -282,13 +303,23 @@ const LogEntry = () => {
         </Link>
 
         <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Log Entry</h1>
-        <p className="text-muted-foreground text-sm mb-8">Track your carbon in under 60 seconds.</p>
+        <p className="text-muted-foreground text-sm mb-6">Track your carbon in under 60 seconds.</p>
+
+        {/* Quick Log NLP Input */}
+        <QuickLogInput
+          onParsed={handleQuickLogParsed}
+          onClear={handleQuickLogClear}
+        />
 
         <div className="flex gap-2 mb-8">
           {tabs.map((t) => (
             <button
               key={t.key}
-              onClick={() => { setActiveTab(t.key); setFormData({}); }}
+              onClick={() => {
+                setActiveTab(t.key);
+                setFormData({});
+                setQuickLogConfidence(null);
+              }}
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-heading font-600 transition-all ${
                 activeTab === t.key ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
               }`}
@@ -305,6 +336,11 @@ const LogEntry = () => {
 
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 glass-card rounded-xl p-6">
+            {quickLogConfidence === "low" && (
+              <div className="mb-4 px-3.5 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs font-mono text-amber-500 flex items-center gap-2">
+                <span>⚠ Double-check these — not fully confident</span>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
                 {activeTab === "food" && <FoodForm formData={formData} update={update} />}
