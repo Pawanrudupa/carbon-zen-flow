@@ -13,12 +13,34 @@ const Login = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      navigate("/dashboard");
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("Sign in is taking longer than expected — please try again"));
+        }, 15000);
+      });
+
+      const { error } = await Promise.race([
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+        timeoutPromise,
+      ]);
+
+      if (error) {
+        console.error("Email sign-in failed:", error);
+        toast.error(error.message);
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Email sign-in error or timeout:", err);
+      toast.error(
+        err?.message || "Sign in is taking longer than expected — please try again"
+      );
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      setLoading(false);
     }
   };
 
@@ -27,17 +49,27 @@ const Login = () => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("cz_oauth_in_progress", "true");
     }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("cz_oauth_in_progress");
+        }
+        console.error("Google sign-in failed:", error);
+        toast.error(error.message);
+      }
+    } catch (err: any) {
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("cz_oauth_in_progress");
       }
-      toast.error(error.message);
+      console.error("Google sign-in error:", err);
+      toast.error(err?.message || "Google sign-in failed");
+    } finally {
       setLoading(false);
     }
   };

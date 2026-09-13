@@ -21,6 +21,7 @@ export interface QuickLogResult {
     to?: string;
   };
   error?: string;
+  errorDetails?: string;
 }
 
 export const ALLOWED_CATEGORIES: readonly QuickLogCategory[] = [
@@ -281,7 +282,18 @@ export async function parseQuickLogText(
     });
 
     if (error) {
-      console.warn("Quick Log edge function call failed:", error);
+      let detailedError = error.message;
+      try {
+        const ctx = (error as any).context;
+        if (ctx) {
+          const status = ctx.status;
+          const bodyText = typeof ctx.text === "function" ? await ctx.text() : "";
+          detailedError = `Edge function error${status ? ` (HTTP ${status})` : ""}: ${bodyText || error.message}`;
+        }
+      } catch {
+        // ignore context body read error
+      }
+      console.error("Quick Log edge function call failed:", error, detailedError);
       return {
         category: null,
         subtype: null,
@@ -290,6 +302,21 @@ export async function parseQuickLogText(
         confidence: "low",
         raw_input: trimmed,
         error: "Couldn't parse that — try the form below",
+        errorDetails: detailedError,
+      };
+    }
+
+    if (data?.error) {
+      console.error("Quick Log backend returned error:", data.error);
+      return {
+        category: null,
+        subtype: null,
+        quantity: 0,
+        unit: "",
+        confidence: "low",
+        raw_input: trimmed,
+        error: "Couldn't parse that — try the form below",
+        errorDetails: String(data.error),
       };
     }
 
@@ -304,6 +331,7 @@ export async function parseQuickLogText(
       confidence: "low",
       raw_input: trimmed,
       error: "Couldn't parse that — try the form below",
+      errorDetails: err instanceof Error ? err.message : String(err),
     };
   }
 }

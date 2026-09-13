@@ -115,30 +115,41 @@ User text to parse:
 `.trim()
 
       const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-flash-lite-latest']
+      let geminiResponse: Response | null = null
+      let lastErrorText = ''
 
-      const geminiResponse = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: extractionPrompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.1,
-          }
+      for (const model of modelsToTry) {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`
+        geminiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: extractionPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.1,
+            }
+          })
         })
-      })
 
-      if (!geminiResponse.ok) {
-        const errorText = await geminiResponse.text()
-        const status = geminiResponse.status
-        if (status === 429 || errorText.includes("RESOURCE_EXHAUSTED") || errorText.includes("rate limit")) {
-          return new Response(JSON.stringify({ error: `RESOURCE_EXHAUSTED: ${errorText}` }), {
+        if (geminiResponse.ok) {
+          break
+        }
+
+        lastErrorText = await geminiResponse.text()
+        console.warn(`Model ${model} failed (${geminiResponse.status}): ${lastErrorText}`)
+      }
+
+      if (!geminiResponse || !geminiResponse.ok) {
+        const status = geminiResponse?.status || 500
+        if (status === 429 || lastErrorText.includes("RESOURCE_EXHAUSTED") || lastErrorText.includes("rate limit")) {
+          return new Response(JSON.stringify({ error: `RESOURCE_EXHAUSTED: ${lastErrorText}` }), {
             status: 429,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
         }
-        throw new Error(`Gemini API failed: ${errorText}`)
+        throw new Error(`Gemini API failed: ${lastErrorText}`)
       }
 
       const geminiData = await geminiResponse.json()
@@ -237,28 +248,39 @@ User text to parse:
       `
     }
 
-    // 5. Call Gemini 2.5 Flash
+    // 5. Call Gemini API with fallback models
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-flash-lite-latest']
+    let geminiResponse: Response | null = null
+    let lastErrorText = ''
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }]
+    for (const model of modelsToTry) {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`
+      geminiResponse = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: systemPrompt }] }]
+        })
       })
-    })
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text()
-      const status = geminiResponse.status
-      if (status === 429 || errorText.includes("RESOURCE_EXHAUSTED") || errorText.includes("rate limit")) {
-        return new Response(JSON.stringify({ error: `RESOURCE_EXHAUSTED: ${errorText}` }), {
+      if (geminiResponse.ok) {
+        break
+      }
+
+      lastErrorText = await geminiResponse.text()
+      console.warn(`Chat model ${model} failed (${geminiResponse.status}): ${lastErrorText}`)
+    }
+
+    if (!geminiResponse || !geminiResponse.ok) {
+      const status = geminiResponse?.status || 500
+      if (status === 429 || lastErrorText.includes("RESOURCE_EXHAUSTED") || lastErrorText.includes("rate limit")) {
+        return new Response(JSON.stringify({ error: `RESOURCE_EXHAUSTED: ${lastErrorText}` }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      throw new Error(`Gemini API failed: ${errorText}`)
+      throw new Error(`Gemini API failed: ${lastErrorText}`)
     }
 
     const geminiData = await geminiResponse.json()

@@ -39,7 +39,7 @@ export const QuickLogInput = ({ onParsed, onClear }: QuickLogInputProps) => {
       const result = await parseQuickLogText(trimmed);
 
       if (!result.category || result.confidence === "low") {
-        // Fallback to empty manual form with graceful error message
+        console.error("QuickLog parse failed:", result);
         onClear();
         setStatus("error");
         setFeedbackMessage("Couldn't parse that — try the form below");
@@ -48,6 +48,7 @@ export const QuickLogInput = ({ onParsed, onClear }: QuickLogInputProps) => {
 
       const mapped = mapQuickLogToForm(result);
       if (!mapped) {
+        console.error("QuickLog parse failed (could not map result to form):", result);
         onClear();
         setStatus("error");
         setFeedbackMessage("Couldn't parse that — try the form below");
@@ -70,7 +71,8 @@ export const QuickLogInput = ({ onParsed, onClear }: QuickLogInputProps) => {
         setStatus("success");
         setFeedbackMessage("Form pre-filled! Review and edit below.");
       }
-    } catch {
+    } catch (err: any) {
+      console.error("QuickLog parse failed:", err);
       onClear();
       setStatus("error");
       setFeedbackMessage("Couldn't parse that — try the form below");
