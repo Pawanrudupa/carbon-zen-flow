@@ -39,7 +39,7 @@ serve(async (req) => {
 
     const { data: monthEntries, error: entriesError } = await supabaseAdmin
       .from('entries')
-      .select('impact_kg')
+      .select('co2_kg')
       .eq('user_id', newEntry.user_id)
       .gte('logged_at', firstDayOfMonth)
 
@@ -48,12 +48,12 @@ serve(async (req) => {
     // Sum up everything they have logged this month
     let currentMonthTotal = 0;
     monthEntries?.forEach(entry => {
-      currentMonthTotal += (Number(entry.impact_kg) || 0);
+      currentMonthTotal += (Number(entry.co2_kg) || 0);
     });
 
     // 5. SPAM PREVENTION: Did this *specific* entry push them over the edge?
     // We subtract the new entry to see what their total was BEFORE they hit save.
-    const newEntryImpact = Number(newEntry.impact_kg) || 0;
+    const newEntryImpact = Number(newEntry.co2_kg) || 0;
     const totalBeforeThisEntry = currentMonthTotal - newEntryImpact;
 
     // If they were already over the target yesterday, don't email them again today!
