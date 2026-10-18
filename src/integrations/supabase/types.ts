@@ -91,20 +91,245 @@ export type Database = {
           created_at: string | null
           id: string
           username: string | null
+          theme_color: string | null
+          density: string | null
+          auto_generate_reports: boolean | null
+          report_email: string | null
+          notify_daily_reminder: boolean | null
+          notify_daily_time: string | null
+          notify_weekly_summary: boolean | null
+          notify_challenge_deadlines: boolean | null
+          notify_monthly_report: boolean | null
+          notify_household_activity: boolean | null
+          notify_goal_achieved: boolean | null
+          monthly_target: number | null
+          yearly_target: number | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           id: string
           username?: string | null
+          theme_color?: string | null
+          density?: string | null
+          auto_generate_reports?: boolean | null
+          report_email?: string | null
+          notify_daily_reminder?: boolean | null
+          notify_daily_time?: string | null
+          notify_weekly_summary?: boolean | null
+          notify_challenge_deadlines?: boolean | null
+          notify_monthly_report?: boolean | null
+          notify_household_activity?: boolean | null
+          notify_goal_achieved?: boolean | null
+          monthly_target?: number | null
+          yearly_target?: number | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
           username?: string | null
+          theme_color?: string | null
+          density?: string | null
+          auto_generate_reports?: boolean | null
+          report_email?: string | null
+          notify_daily_reminder?: boolean | null
+          notify_daily_time?: string | null
+          notify_weekly_summary?: boolean | null
+          notify_challenge_deadlines?: boolean | null
+          notify_monthly_report?: boolean | null
+          notify_household_activity?: boolean | null
+          notify_goal_achieved?: boolean | null
+          monthly_target?: number | null
+          yearly_target?: number | null
         }
         Relationships: []
+      }
+      households: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          goal_monthly_kg: number | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          goal_monthly_kg?: number | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          goal_monthly_kg?: number | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          household_id: string
+          id: string
+          invite_code: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          household_id: string
+          id?: string
+          invite_code: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          household_id?: string
+          id?: string
+          invite_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          data: Json | null
+          file_size_kb: number | null
+          file_url: string | null
+          format: string | null
+          generated_at: string | null
+          id: string
+          period: string | null
+          user_id: string | null
+        }
+        Insert: {
+          data?: Json | null
+          file_size_kb?: number | null
+          file_url?: string | null
+          format?: string | null
+          generated_at?: string | null
+          id?: string
+          period?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          data?: Json | null
+          file_size_kb?: number | null
+          file_url?: string | null
+          format?: string | null
+          generated_at?: string | null
+          id?: string
+          period?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_stats: {
+        Row: {
+          challenges_completed: number | null
+          created_at: string | null
+          current_level: number | null
+          current_streak: number | null
+          id: string
+          last_logged_date: string | null
+          longest_streak: number | null
+          total_xp: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          challenges_completed?: number | null
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_logged_date?: string | null
+          longest_streak?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          challenges_completed?: number | null
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_logged_date?: string | null
+          longest_streak?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_challenges: {
         Row: {
