@@ -35,7 +35,6 @@ serve(async (req) => {
       const { data: entries, error: entriesError } = await supabaseAdmin
         .from('entries') 
         .select('category, co2_kg')
-        .eq('notify_monthly_report', true)
         .eq('user_id', user.id)
         .gte('logged_at', firstDayLastMonth)
         .lte('logged_at', lastDayLastMonth);

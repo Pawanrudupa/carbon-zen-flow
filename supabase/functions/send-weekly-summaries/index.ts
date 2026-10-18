@@ -54,7 +54,7 @@ serve(async (req) => {
 
       if (entries && entries.length > 0) {
         entries.forEach(entry => {
-          weeklyTotal += (Number(entry.impact_kg) || 0);
+          weeklyTotal += (Number(entry.co2_kg) || 0);
         });
       }
 

@@ -11,8 +11,7 @@ serve(async (req) => {
     const newEntry = payload.record // This is the exact row that was just inserted
 
     // Only trigger the alert if it's a "Big Entry" (e.g., more than 15kg)
-    // You can adjust this threshold based on your app's logic!
-    if (!newEntry || Number(newEntry.impact_kg) < 15) {
+    if (!newEntry || Number(newEntry.co2_kg) < 15) {
       return new Response(JSON.stringify({ message: "Entry too small to trigger alert. Ignored." }), { status: 200 })
     }
 
@@ -22,15 +21,34 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 3. Find the users to notify
-    // In a real app, you would filter by `household_id`. 
-    // For now, we find everyone who has the toggle ON, EXCEPT the person who logged it.
+    // 3. Find the users to notify in the same household
+    const { data: membership } = await supabaseAdmin
+      .from('household_members')
+      .select('household_id')
+      .eq('user_id', newEntry.user_id)
+      .maybeSingle()
+
+    if (!membership) {
+      return new Response(JSON.stringify({ message: "User is not in a household. Ignored." }), { status: 200 })
+    }
+
+    const { data: members, error: membersError } = await supabaseAdmin
+      .from('household_members')
+      .select('user_id')
+      .eq('household_id', membership.household_id)
+      .neq('user_id', newEntry.user_id)
+
+    if (membersError || !members || members.length === 0) {
+      return new Response(JSON.stringify({ message: "No other members in household to notify" }), { status: 200 })
+    }
+
+    const memberIds = members.map(m => m.user_id)
     const { data: users, error: userError } = await supabaseAdmin
       .from('profiles')
       .select('id, report_email')
+      .in('id', memberIds)
       .eq('notify_household_activity', true)
       .not('report_email', 'is', null)
-      .neq('id', newEntry.user_id) // Don't email the person who just logged it!
 
     if (userError) throw userError
     if (!users || users.length === 0) {
@@ -48,7 +66,7 @@ serve(async (req) => {
             <strong>Category:</strong> ${newEntry.category.charAt(0).toUpperCase() + newEntry.category.slice(1)}
           </p>
           <p style="margin: 0; font-size: 16px;">
-            <strong>Impact:</strong> <span style="color: #EF4444; font-weight: bold;">+${Number(newEntry.impact_kg).toFixed(1)} kg CO₂</span>
+            <strong>Impact:</strong> <span style="color: #EF4444; font-weight: bold;">+${Number(newEntry.co2_kg).toFixed(1)} kg CO₂</span>
           </p>
         </div>
 
