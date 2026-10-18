@@ -5,9 +5,27 @@ import { Link } from "react-router-dom";
 import { PenLine } from "lucide-react";
 import ErrorCard from "@/components/ui/ErrorCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const CarbonOrb = () => {
-  const target = 350;
+  const { user } = useAuth();
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-targets", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("monthly_target")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const target = Number(userProfile?.monthly_target) || 350;
   const { data: allEntries = [], isLoading, isError, refetch } = useDashboardData();
 
   const total = useMemo(() => {

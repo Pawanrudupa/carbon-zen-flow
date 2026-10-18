@@ -1,14 +1,67 @@
-import { useState } from "react";
-import { Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Info, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TargetsSection = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [monthly, setMonthly] = useState(350);
   const [annual, setAnnual] = useState(4200);
   const [netZeroYear, setNetZeroYear] = useState(2035);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadTargets() {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("monthly_target, yearly_target")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (data && !error) {
+          if (data.monthly_target) setMonthly(Number(data.monthly_target));
+          if (data.yearly_target) setAnnual(Number(data.yearly_target));
+        }
+      } catch (err) {
+        console.error("Failed to load targets:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadTargets();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          monthly_target: monthly,
+          yearly_target: annual,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      toast.success("Targets updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["user-targets"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update targets.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const daily = (monthly / 30).toFixed(1);
 
   const currentYear = 2026;
@@ -97,8 +150,13 @@ const TargetsSection = () => {
         </div>
       </div>
 
-      <Button onClick={() => toast.success("Settings saved.")} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        Save changes
+      <Button 
+        onClick={handleSave} 
+        disabled={saving}
+        className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
+      >
+        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        {saving ? "Saving..." : "Save changes"}
       </Button>
     </div>
   );

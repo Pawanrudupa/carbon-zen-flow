@@ -1,6 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { ForecastResult } from "@/utils/mlModel";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface PatternInsightsProps {
   entries: any[];
@@ -27,6 +30,22 @@ function getMlModel(): Promise<typeof import("@/utils/mlModel")> {
 }
 
 const PatternInsights = ({ entries }: PatternInsightsProps) => {
+  const { user } = useAuth();
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-targets", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("monthly_target")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const target = Number(userProfile?.monthly_target) || 350;
+
   const [biggestWin, setBiggestWin] = useState({ title: "Analyzing data...", savedKg: 0, equivalentKm: 0, dateString: "" });
   const [mlModule, setMlModule] = useState<typeof import("@/utils/mlModel") | null>(() => cachedMlModule);
   const [loadingModel, setLoadingModel] = useState(() => !cachedMlModule);
@@ -66,7 +85,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
   const forecast = useMemo((): ForecastResult => {
     const defaultForecast: ForecastResult = {
       projectedMonthTotal: 0,
-      targetKg: 350,
+      targetKg: target,
       daysRemaining: 0,
       slope: 0,
       intercept: 0,
@@ -78,7 +97,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
 
     if (!entries || entries.length === 0) {
       if (mlModule) {
-        return mlModule.forecastMonthEnd([], 350, 0);
+        return mlModule.forecastMonthEnd([], target, 0);
       }
       return defaultForecast;
     }
@@ -99,7 +118,7 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
     const daysWithData = dailyTotals.length;
 
     if (mlModule) {
-      return mlModule.forecastMonthEnd(dailyTotals, 350, daysWithData);
+      return mlModule.forecastMonthEnd(dailyTotals, target, daysWithData);
     }
 
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -110,9 +129,9 @@ const PatternInsights = ({ entries }: PatternInsightsProps) => {
       ...defaultForecast,
       projectedMonthTotal: projected,
       daysRemaining: Math.max(0, daysInMonth - daysPassed),
-      onTrack: projected <= 350,
+      onTrack: projected <= target,
     };
-  }, [entries, mlModule]);
+  }, [entries, mlModule, target]);
 
   useEffect(() => {
     try {
