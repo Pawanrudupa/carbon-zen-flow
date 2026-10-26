@@ -14,6 +14,7 @@ import {
 interface TrendChartProps {
   entries: any[];
   dateRange: string;
+  monthlyTarget?: number;
 }
 
 const categories = [
@@ -24,41 +25,61 @@ const categories = [
   { key: "Shopping", color: "#A78BFA" },
 ];
 
-const TARGET = 350;
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+  target: number;
+  isDaily: boolean;
+}
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, target, isDaily }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
   const val = payload[0].value;
-  const diff = ((val - TARGET) / TARGET * 100).toFixed(1);
-  const sign = val > TARGET ? "+" : "";
+  const diff = target > 0 ? (((val - target) / target) * 100).toFixed(1) : "0";
+  const sign = Number(diff) > 0 ? "+" : "";
+  const unitLabel = isDaily ? "daily target" : "monthly target";
   return (
-    <div className="px-3 py-2 rounded-lg text-xs font-mono"
-      style={{ background: "#111A14", border: "1px solid rgba(34,197,94,0.2)" }}>
-      <span className="text-foreground">{label} · {val} kg · {sign}{diff}% vs target</span>
+    <div
+      className="px-3 py-2 rounded-lg text-xs font-mono"
+      style={{ background: "#111A14", border: "1px solid rgba(34,197,94,0.2)" }}
+    >
+      <span className="text-foreground">
+        {label} · {val} kg · {sign}{diff}% vs {unitLabel}
+      </span>
     </div>
   );
 };
 
-const TrendChart = ({ entries, dateRange }: TrendChartProps) => {
+const TrendChart = ({ entries, dateRange, monthlyTarget = 350 }: TrendChartProps) => {
   const [activeCategory, setActiveCategory] = useState("All");
+
+  const isDaily = dateRange === "This Month";
+  const effectiveTarget = isDaily ? Math.round(monthlyTarget / 30) : monthlyTarget;
+  const targetLabel = isDaily ? `Target: ${effectiveTarget} kg/day` : `Target: ${effectiveTarget} kg/mo`;
 
   const chartData = useMemo(() => {
     const groups: Record<string, any> = {};
     entries.forEach((e) => {
       const d = new Date(e.logged_at);
-      // Group by day if "This Month", else by month
-      const isDaily = dateRange === "This Month";
       const key = isDaily
         ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
         : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      
+
       if (!groups[key]) {
-        groups[key] = { 
-          label: isDaily ? `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}` : d.toLocaleString("en-US", { month: "short" }), 
-          total: 0, food: 0, transport: 0, energy: 0, shopping: 0, sortKey: key 
+        groups[key] = {
+          label: isDaily
+            ? `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`
+            : d.toLocaleString("en-US", { month: "short" }),
+          total: 0,
+          food: 0,
+          transport: 0,
+          energy: 0,
+          shopping: 0,
+          sortKey: key,
         };
       }
-      
+
       const cat = e.category || "other";
       const val = e.co2_kg || 0;
       groups[key].total += val;
@@ -77,72 +98,79 @@ const TrendChart = ({ entries, dateRange }: TrendChartProps) => {
         energy: Math.round(g.energy),
         shopping: Math.round(g.shopping),
       }));
-  }, [entries, dateRange]);
+  }, [entries, isDaily]);
 
   const dataKey = activeCategory === "All" ? "total" : activeCategory.toLowerCase();
   const lineColor = categories.find((c) => c.key === activeCategory)?.color || "#22C55E";
 
+  const maxDataVal = useMemo(() => {
+    if (!chartData.length) return effectiveTarget;
+    return Math.max(...chartData.map((d: any) => d[dataKey] || 0), effectiveTarget);
+  }, [chartData, dataKey, effectiveTarget]);
+
   return (
     <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
       <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-4">
-        {dateRange === "This Month" ? "Daily emissions over time" : "Monthly emissions over time"}
+        {isDaily ? "Daily emissions over time" : "Monthly emissions over time"}
       </h3>
 
       {chartData.length === 0 ? (
-        <div className="h-[280px] flex items-center justify-center text-xs text-muted-foreground">
-          No data available
+        <div className="h-[280px] flex items-center justify-center text-xs text-muted-foreground font-mono">
+          No emissions data recorded for this period
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-          <defs>
-            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34,197,94,0.08)" />
-          <XAxis
-            dataKey="month"
-            tick={{ fill: "hsl(142 69% 58%)", fontSize: 11, fontFamily: "JetBrains Mono" }}
-            axisLine={{ stroke: "rgba(34,197,94,0.1)" }}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fill: "hsl(142 69% 58%)", fontSize: 11, fontFamily: "JetBrains Mono" }}
-            axisLine={false}
-            tickLine={false}
-            domain={[0, 500]}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine
-            y={TARGET}
-            stroke="#F59E0B"
-            strokeDasharray="6 4"
-            label={{
-              value: "Target: 350 kg",
-              position: "right",
-              fill: "#F59E0B",
-              fontSize: 10,
-              fontFamily: "JetBrains Mono",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey={dataKey}
-            fill="url(#areaFill)"
-            stroke="none"
-          />
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={lineColor}
-            strokeWidth={2.5}
-            dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
-            activeDot={{ r: 6, fill: lineColor, stroke: "#0A0F0D", strokeWidth: 2 }}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+            <defs>
+              <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
+                <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(34,197,94,0.08)" />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: "hsl(142 69% 58%)", fontSize: 11, fontFamily: "JetBrains Mono" }}
+              axisLine={{ stroke: "rgba(34,197,94,0.1)" }}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: "hsl(142 69% 58%)", fontSize: 11, fontFamily: "JetBrains Mono" }}
+              axisLine={false}
+              tickLine={false}
+              domain={[0, Math.ceil(maxDataVal * 1.25)]}
+            />
+            <Tooltip
+              content={<CustomTooltip target={effectiveTarget} isDaily={isDaily} />}
+            />
+            <ReferenceLine
+              y={effectiveTarget}
+              stroke="#F59E0B"
+              strokeDasharray="6 4"
+              label={{
+                value: targetLabel,
+                position: "right",
+                fill: "#F59E0B",
+                fontSize: 10,
+                fontFamily: "JetBrains Mono",
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              fill="url(#areaFill)"
+              stroke="none"
+            />
+            <Line
+              type="monotone"
+              dataKey={dataKey}
+              stroke={lineColor}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
+              activeDot={{ r: 6, fill: lineColor, stroke: "#0A0F0D", strokeWidth: 2 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       )}
 
       <div className="flex items-center gap-2 mt-4">
