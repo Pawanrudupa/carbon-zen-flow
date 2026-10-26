@@ -48,7 +48,7 @@ const DangerZoneSection = () => {
     }
   };
 
-  // 2. Delete user account from the profiles table and sign out
+  // 2. Delete user account atomically using SECURITY DEFINER RPC and sign out
   const handleDeleteAccount = async () => {
     if (!user) {
       toast.error("You must be logged in to delete your account.");
@@ -56,26 +56,22 @@ const DangerZoneSection = () => {
     }
 
     const confirmed = window.confirm(
-      "WARNING: This will permanently delete your CarbonLedger account and all associated logs. Proceed?"
+      "WARNING: This will permanently delete your account, authentication credentials, and all logs. Proceed?"
     );
     if (!confirmed) return;
 
     try {
       setIsDeleting(true);
 
-      // Delete profile. PostgreSQL trigger cascades deletion to auth.users
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", user.id);
-
-      if (profileError) throw profileError;
+      // Invoke the SECURITY DEFINER RPC that safely deletes from auth.users (cascades to profiles, entries, stats)
+      const { error: rpcError } = await supabase.rpc("delete_user_account" as any);
+      if (rpcError) throw rpcError;
 
       // Sign out user immediately to clear auth session, local tokens, and cookies
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) throw signOutError;
 
-      toast.success("Account successfully deleted.");
+      toast.success("Account and all associated data permanently deleted.");
       setOpen(false);
       setConfirm("");
       navigate("/");

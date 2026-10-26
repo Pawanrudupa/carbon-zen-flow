@@ -284,6 +284,7 @@ const LogEntry = () => {
       // Single invalidation covers CarbonOrb, CategoryBreakdown, TrendSparklines, LogTimeline
       queryClient.invalidateQueries({ queryKey: ["dashboard-entries"] });
       queryClient.invalidateQueries({ queryKey: ["analytics-entries"] });
+      window.dispatchEvent(new Event("entryAdded"));
       setFormData({});
       setNotes("");
       setQuickLogConfidence(null);

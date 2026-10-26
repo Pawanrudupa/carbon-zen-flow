@@ -25,6 +25,7 @@ serve(async (req) => {
 
     const now = new Date();
     const tomorrow = new Date(now.getTime() + (24 * 60 * 60 * 1000)); 
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
 
     let emailsSent = 0;
 
@@ -81,7 +82,7 @@ serve(async (req) => {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-             <a href="https://your-app-url.com/challenges" style="background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px;">Complete Challenge</a>
+             <a href="${appUrl}/challenges" style="background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px;">Complete Challenge</a>
           </div>
           
           <p style="color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7; padding-top: 15px;">

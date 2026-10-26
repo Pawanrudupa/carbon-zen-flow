@@ -16,34 +16,55 @@ export type Database = {
     Tables: {
       challenges: {
         Row: {
+          badge_emoji: string | null
           category: string | null
+          created_at: string | null
           description: string | null
           difficulty: string | null
           duration_days: number | null
+          household_id: string | null
           icon: string | null
           id: string
+          is_custom: boolean | null
+          is_featured: boolean | null
           target_co2_saving: number | null
           title: string | null
+          tracking_criteria: Json | null
+          xp_reward: number | null
         }
         Insert: {
+          badge_emoji?: string | null
           category?: string | null
+          created_at?: string | null
           description?: string | null
           difficulty?: string | null
           duration_days?: number | null
+          household_id?: string | null
           icon?: string | null
           id?: string
+          is_custom?: boolean | null
+          is_featured?: boolean | null
           target_co2_saving?: number | null
           title?: string | null
+          tracking_criteria?: Json | null
+          xp_reward?: number | null
         }
         Update: {
+          badge_emoji?: string | null
           category?: string | null
+          created_at?: string | null
           description?: string | null
           difficulty?: string | null
           duration_days?: number | null
+          household_id?: string | null
           icon?: string | null
           id?: string
+          is_custom?: boolean | null
+          is_featured?: boolean | null
           target_co2_saving?: number | null
           title?: string | null
+          tracking_criteria?: Json | null
+          xp_reward?: number | null
         }
         Relationships: []
       }
@@ -243,6 +264,47 @@ export type Database = {
           },
         ]
       }
+      household_challenge_suggestions: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          duration_days: number
+          id: string
+          household_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by: string
+          duration_days: number
+          id?: string
+          household_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          duration_days?: number
+          id?: string
+          household_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_challenge_suggestions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           data: Json | null
@@ -291,6 +353,7 @@ export type Database = {
           current_level: number | null
           current_streak: number | null
           id: string
+          last_entry_date: string | null
           last_logged_date: string | null
           longest_streak: number | null
           total_xp: number | null
@@ -303,6 +366,7 @@ export type Database = {
           current_level?: number | null
           current_streak?: number | null
           id?: string
+          last_entry_date?: string | null
           last_logged_date?: string | null
           longest_streak?: number | null
           total_xp?: number | null
@@ -315,6 +379,7 @@ export type Database = {
           current_level?: number | null
           current_streak?: number | null
           id?: string
+          last_entry_date?: string | null
           last_logged_date?: string | null
           longest_streak?: number | null
           total_xp?: number | null
@@ -384,7 +449,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_challenge_progress: {
+        Args: {
+          p_user_id: string
+          p_challenge_id: string
+        }
+        Returns: number
+      }
+      delete_user_account: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      is_household_member: {
+        Args: {
+          lookup_household_id: string
+          lookup_user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

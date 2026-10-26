@@ -28,7 +28,7 @@ const Navbar = () => {
               Sign In
             </Button>
           </Link>
-          <Link to="/login">
+          <Link to="/signup">
             <Button className="text-sm font-heading font-600 bg-primary hover:bg-primary/90 text-primary-foreground">
               Get Started
             </Button>

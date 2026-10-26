@@ -13,7 +13,6 @@ serve(async (req) => {
     )
 
     // 2. Find all users who opted into WEEKLY summaries
-    // Notice we are checking the new database column here!
     const { data: users, error: userError } = await supabaseAdmin
       .from('profiles')
       .select('id, report_email')
@@ -27,6 +26,8 @@ serve(async (req) => {
     if (users.length === 0) {
        return new Response(JSON.stringify({ message: "No users to process" }), { status: 200 })
     }
+
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
 
     // 3. Calculate date range for the LAST 7 DAYS
     const now = new Date();
@@ -74,7 +75,7 @@ serve(async (req) => {
           ${weeklyTotal === 0 ? '<p style="color: #F59E0B;"><em>No entries logged this week. Time to build that streak!</em></p>' : ''}
           
           <div style="text-align: center; margin-top: 25px;">
-             <a href="https://your-app-url.com" style="background-color: #10B981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Log Today's Impact</a>
+             <a href="${appUrl}/dashboard" style="background-color: #10B981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Log Today's Impact</a>
           </div>
 
           <p style="color: #71717a; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
@@ -85,7 +86,7 @@ serve(async (req) => {
 
       // Send via Resend
       const resendResponse = await resend.emails.send({
-        from: 'Carbon Zen Reports <onboarding@resend.dev>', // Keep testing email for now
+        from: 'Carbon Zen Reports <onboarding@resend.dev>',
         to: user.report_email,
         subject: 'Your Weekly Carbon Digest 📅',
         html: htmlReport,

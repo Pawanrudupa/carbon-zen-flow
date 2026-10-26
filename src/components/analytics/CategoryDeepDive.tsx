@@ -40,7 +40,7 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
       
       let cat = e.category || "other";
       cat = cat.charAt(0).toUpperCase() + cat.slice(1);
-      if (catTotals[cat] === undefined) cat = "Shopping"; // Map unknown to something, or ignore. Just summing known ones.
+      if (catTotals[cat] === undefined) cat = "Shopping";
       
       if (catTotals[cat] !== undefined) {
         const val = e.co2_kg || 0;
@@ -61,7 +61,18 @@ const CategoryDeepDive = ({ entries }: CategoryDeepDiveProps) => {
     return { stack, cats, totalAll };
   }, [entries]);
 
-  if (stack.length === 0) return null;
+  if (stack.length === 0) {
+    return (
+      <div className="glass-card rounded-xl p-8 text-center min-w-0">
+        <h3 className="font-mono text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-2">
+          Category Deep Dive
+        </h3>
+        <p className="text-sm text-muted-foreground font-mono">
+          No emissions data recorded for this period. Log activities to view category breakdowns.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

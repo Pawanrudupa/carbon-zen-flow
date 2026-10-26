@@ -47,24 +47,26 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
 
   const maxCo2 = Math.max(...data.map((d) => d.co2), 1);
   const minCo2 = Math.min(...data.map((d) => d.co2));
-  const avg = data.reduce((s, d) => s + d.co2, 0) / (data.filter(d => d.co2 > 0).length || 1);
+  const activeEntries = data.filter((d) => d.co2 > 0);
+  const avg = activeEntries.length > 0 ? activeEntries.reduce((s, d) => s + d.co2, 0) / activeEntries.length : 0;
 
-  // Brighter green = lower emissions
+  // Semantic color scale:
+  // 0 kg = subtle empty cell
+  // > 0 = low emissions (green), moderate (amber), high (red)
   const getColor = (co2: number) => {
-    const norm = 1 - (co2 - minCo2) / (maxCo2 - minCo2 || 1);
-    if (norm > 0.8) return "hsl(142 71% 45% / 0.95)";
-    if (norm > 0.6) return "hsl(142 71% 45% / 0.7)";
-    if (norm > 0.4) return "hsl(142 71% 45% / 0.45)";
-    if (norm > 0.2) return "hsl(142 71% 45% / 0.25)";
-    return "hsl(142 71% 45% / 0.08)";
+    if (co2 === 0) return "hsl(142 71% 45% / 0.08)";
+    const ratio = (co2 - minCo2) / (maxCo2 - minCo2 || 1);
+    if (ratio > 0.75) return "hsl(0 84% 60% / 0.85)";
+    if (ratio > 0.4) return "hsl(45 93% 47% / 0.85)";
+    return "hsl(142 71% 45% / 0.85)";
   };
 
   const getTooltip = (idx: number) => {
     const d = data[idx];
     const dayOfWeek = DAY_FULL[idx % 7];
-    const status = d.co2 === 0 ? "no data" : d.co2 < avg ? "below avg" : "above avg";
+    const status = d.co2 === 0 ? "no activity" : d.co2 < avg ? "below avg" : "above avg";
     const dateStr = d.date.toLocaleString("en-US", { month: "short", day: "numeric" });
-    return `${dayOfWeek}, ${dateStr} · ${Math.round(d.co2)} kg CO₂ — ${status}`;
+    return `${dayOfWeek}, ${dateStr} · ${d.co2.toFixed(1)} kg CO₂ — ${status}`;
   };
 
   return (
@@ -75,7 +77,7 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
 
       <div className="overflow-x-auto pt-6 -mt-2">
         <div className="inline-flex flex-col">
-          {/* Month labels top — computed from actual date range */}
+          {/* Month labels top — aligned with columns without duplicate offset */}
           <div className="relative flex ml-[28px] mb-1 h-4">
             {(() => {
               const monthLabels: { label: string; col: number }[] = [];
@@ -92,7 +94,7 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
                 <span
                   key={`${label}-${col}`}
                   className="text-[9px] font-mono text-muted-foreground/40 absolute"
-                  style={{ left: `${28 + col * 16}px` }}
+                  style={{ left: `${col * 16}px` }}
                 >
                   {label}
                 </span>
@@ -141,12 +143,15 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-1.5 mt-3 justify-end">
-        <span className="text-[9px] text-muted-foreground/40 font-mono">High</span>
-        {["0.08", "0.25", "0.45", "0.7", "0.95"].map((a, i) => (
-          <div key={i} className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: `hsl(142 71% 45% / ${a})` }} />
-        ))}
-        <span className="text-[9px] text-muted-foreground/40 font-mono">Low</span>
+      <div className="flex items-center gap-2 mt-4 justify-end">
+        <span className="text-[9px] text-muted-foreground/40 font-mono">No data</span>
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(142 71% 45% / 0.08)" }} />
+        <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">Low CO₂</span>
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(142 71% 45% / 0.85)" }} />
+        <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">Moderate</span>
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(45 93% 47% / 0.85)" }} />
+        <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">High CO₂</span>
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(0 84% 60% / 0.85)" }} />
       </div>
     </div>
   );
