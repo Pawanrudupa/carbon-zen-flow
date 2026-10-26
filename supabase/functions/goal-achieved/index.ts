@@ -10,30 +10,33 @@ serve(async (req) => {
     const payload = await req.json()
     const newEntry = payload.record 
 
+    if (!newEntry || !newEntry.user_id) {
+      return new Response(JSON.stringify({ message: "No entry record found." }), { status: 400 })
+    }
+
     // 2. Initialize Supabase Admin Client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 3. Get the user's profile to check their preferences and their actual target
-    // Note: We assume you have a 'monthly_target' column. If not, we default to 50 for this example!
+    // 3. Get the user's profile to check preferences and actual target
     const { data: user, error: userError } = await supabaseAdmin
       .from('profiles')
-      .select('report_email, notify_goal_achieved, monthly_target') // Add monthly_target to your DB if you haven't!
+      .select('report_email, notify_goal_achieved, monthly_target')
       .eq('id', newEntry.user_id)
       .single()
 
     if (userError || !user) throw new Error("User not found")
     
-    // If they have the toggle OFF, stop immediately.
+    // If notifications disabled or no email, stop immediately.
     if (!user.notify_goal_achieved || !user.report_email) {
       return new Response(JSON.stringify({ message: "User opted out of goal alerts" }), { status: 200 })
     }
 
-    const monthlyTarget = user.monthly_target || 50; // Fallback to 50 if they haven't set one
+    const monthlyTarget = Number(user.monthly_target) || 350;
 
-    // 4. Calculate their total for the CURRENT month
+    // 4. Calculate total for the CURRENT month
     const now = new Date();
     const firstDayOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 
@@ -45,55 +48,62 @@ serve(async (req) => {
 
     if (entriesError) throw entriesError
 
-    // Sum up everything they have logged this month
     let currentMonthTotal = 0;
     monthEntries?.forEach(entry => {
       currentMonthTotal += (Number(entry.co2_kg) || 0);
     });
 
-    // 5. SPAM PREVENTION: Did this *specific* entry push them over the edge?
-    // We subtract the new entry to see what their total was BEFORE they hit save.
+    // 5. Evaluate Budget Threshold (Carbon Emissions Cap)
     const newEntryImpact = Number(newEntry.co2_kg) || 0;
     const totalBeforeThisEntry = currentMonthTotal - newEntryImpact;
 
-    // If they were already over the target yesterday, don't email them again today!
-    const justCrossedFinishLine = (totalBeforeThisEntry < monthlyTarget) && (currentMonthTotal >= monthlyTarget);
+    const crossedLimit = (totalBeforeThisEntry < monthlyTarget) && (currentMonthTotal >= monthlyTarget);
+    const crossedWarning = (totalBeforeThisEntry < (monthlyTarget * 0.8)) && (currentMonthTotal >= (monthlyTarget * 0.8));
 
-    if (!justCrossedFinishLine) {
-      return new Response(JSON.stringify({ message: "Goal not crossed on this exact entry. No email sent." }), { status: 200 })
+    if (!crossedLimit && !crossedWarning) {
+      return new Response(JSON.stringify({ message: "No threshold crossed. No email sent." }), { status: 200 });
     }
 
-    // 6. Build the Celebration Email
+    const isLimitBreached = crossedLimit;
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
+    const subject = isLimitBreached 
+      ? "⚠️ Carbon Limit Reached: Monthly budget exceeded"
+      : "⚡ Carbon Alert: You've reached 80% of your monthly budget";
+
     const htmlReport = `
-      <div style="font-family: sans-serif; max-width: 500px; margin: auto; padding: 30px 20px; border: 1px solid #eee; border-radius: 12px; text-align: center; background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);">
-        <div style="font-size: 48px; margin-bottom: 10px;">🏆</div>
-        <h2 style="color: #059669; margin-top: 0;">Target Achieved!</h2>
-        <p style="color: #3f3f46; font-size: 16px;">Incredible work. You just hit your monthly Carbon Zen target!</p>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin: 25px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-          <p style="margin: 0; color: #71717a; text-transform: uppercase; font-size: 12px; font-weight: bold; letter-spacing: 1px;">Current Month Total</p>
-          <p style="margin: 5px 0 0 0; font-size: 36px; font-weight: 900; color: #10B981;">
-            ${currentMonthTotal.toFixed(1)} <span style="font-size: 16px; font-weight: normal; color: #71717a;">/ ${monthlyTarget}</span>
+      <div style="font-family: sans-serif; max-width: 500px; margin: auto; padding: 25px; border-radius: 12px; background: #ffffff; border: 1px solid #fee2e2; border-top: 5px solid #ef4444;">
+        <h2 style="color: #b91c1c; margin-top: 0;">${isLimitBreached ? "Monthly Limit Reached 🛑" : "Approaching Monthly Limit ⚠️"}</h2>
+        <p style="color: #374151; font-size: 15px;">
+          ${isLimitBreached 
+            ? "Your latest entry pushed your monthly emissions past your target budget."
+            : "You have used 80% of your carbon emission budget for this month."}
+        </p>
+        <div style="background: #fef2f2; padding: 18px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #7f1d1d; text-transform: uppercase; font-weight: bold;">Current Total vs Target</p>
+          <p style="margin: 6px 0 0 0; font-size: 32px; font-weight: 800; color: #dc2626;">
+            ${currentMonthTotal.toFixed(1)} <span style="font-size: 16px; color: #6b7280;">/ ${monthlyTarget} kg CO₂</span>
           </p>
         </div>
-
-        <p style="color: #71717a; font-size: 14px;">You are crushing it. Let's see how far past the goal you can push it before the month ends!</p>
-        
-        <p style="color: #a1a1aa; font-size: 11px; margin-top: 40px;">
-          You are receiving this because you enabled Goal Celebrations in your Carbon Zen settings.
+        <p style="color: #6b7280; font-size: 14px; line-height: 1.5;">
+          Tip: Consider choosing public transit, plant-forward meals, or reducing energy consumption for the remainder of the month to stabilize your footprint.
+        </p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${appUrl}/dashboard" style="background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">View Carbon Dashboard</a>
+        </div>
+        <p style="color: #9ca3af; font-size: 11px; margin-top: 30px; border-top: 1px solid #f3f4f6; padding-top: 15px;">
+          You are receiving this because you enabled Carbon Budget alerts in your Carbon Zen settings.
         </p>
       </div>
     `;
 
-    // 7. Blast the email
     await resend.emails.send({
-      from: 'Carbon Zen Celebrations <onboarding@resend.dev>',
+      from: 'Carbon Zen Alerts <onboarding@resend.dev>',
       to: user.report_email,
-      subject: '🎉 You hit your monthly target!',
+      subject,
       html: htmlReport,
     });
 
-    return new Response(JSON.stringify({ message: "Celebration email fired!" }), { status: 200 })
+    return new Response(JSON.stringify({ message: "Budget alert email sent successfully" }), { status: 200 })
 
   } catch (error) {
     console.error("Critical Webhook Error:", error)

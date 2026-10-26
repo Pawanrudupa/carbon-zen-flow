@@ -41,6 +41,8 @@ serve(async (req) => {
        return new Response(JSON.stringify({ message: "No reminders scheduled for this hour." }), { status: 200 })
     }
 
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
+
     // 4. Build and send the emails
     for (const user of usersToEmail) {
       const htmlReport = `
@@ -49,7 +51,7 @@ serve(async (req) => {
           <p style="color: #3f3f46; font-size: 16px;">Just a quick reminder to log your footprint for today!</p>
           
           <div style="text-align: center; margin: 35px 0;">
-             <a href="https://your-app-url.com" style="background-color: #10B981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Log Today's Impact</a>
+             <a href="${appUrl}/log" style="background-color: #10B981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Log Today's Impact</a>
           </div>
           
           <p style="color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7; padding-top: 15px;">
