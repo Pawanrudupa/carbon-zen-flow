@@ -1,9 +1,14 @@
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const benefits = ["Full PDF exports", "CSV data access", "Scheduled auto-reports"];
 
 const UpgradeCTA = () => {
+  const handleUpgrade = () => {
+    toast.info("All premium analytics & exports are currently complimentary during public beta!");
+  };
+
   return (
     <div
       className="rounded-xl border p-6"
@@ -33,7 +38,10 @@ const UpgradeCTA = () => {
           <p className="text-[10px] text-muted-foreground mt-1">
             or ₹2,990/year (save 2 months)
           </p>
-          <Button className="mt-3 bg-primary text-primary-foreground hover:bg-primary/90 text-sm px-6">
+          <Button
+            onClick={handleUpgrade}
+            className="mt-3 bg-primary text-primary-foreground hover:bg-primary/90 text-sm px-6"
+          >
             Upgrade to Premium
           </Button>
         </div>
