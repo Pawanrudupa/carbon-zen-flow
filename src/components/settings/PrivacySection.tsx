@@ -208,7 +208,7 @@ const PrivacySection = () => {
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-foreground">Delete account</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Permanently delete your CarbonLedger account and all data.
+              Permanently delete your CarbonZen account and all data.
             </p>
           </div>
           <Button

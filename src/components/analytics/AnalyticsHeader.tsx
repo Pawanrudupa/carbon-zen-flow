@@ -17,7 +17,7 @@ const AnalyticsHeader = ({ dateRange, setDateRange, entries }: AnalyticsHeaderPr
     const safeEntries = entries || [];
     const totalTracked = safeEntries.reduce((sum, e) => sum + (e.co2_kg || 0), 0);
 
-    // Group by month to find best month and months logged
+    // Group by month to find best (lowest positive emissions) month and months logged
     const byMonth = safeEntries.reduce((acc: Record<string, number>, e) => {
       if (!e.logged_at) return acc;
       const d = new Date(e.logged_at);
@@ -28,12 +28,14 @@ const AnalyticsHeader = ({ dateRange, setDateRange, entries }: AnalyticsHeaderPr
       return acc;
     }, {});
 
-    const monthsLogged = Object.keys(byMonth).length;
+    const nonZeroMonths = Object.entries(byMonth).filter(([_, co2]) => co2 > 0);
+    const monthsLogged = nonZeroMonths.length;
 
     let bestMonthStr = "None";
     if (monthsLogged > 0) {
-      const sortedMonths = Object.entries(byMonth).sort((a, b) => a[1] - b[1]); 
-      const best = sortedMonths[sortedMonths.length - 1];
+      // Sort ascending so lowest emission month is first
+      const sortedMonths = nonZeroMonths.sort((a, b) => a[1] - b[1]); 
+      const best = sortedMonths[0]; // Lowest positive emission month
       if (best) {
         const [y, m] = best[0].split("-");
         const d = new Date(parseInt(y), parseInt(m), 1);

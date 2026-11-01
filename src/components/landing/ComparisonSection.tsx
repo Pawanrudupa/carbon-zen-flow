@@ -11,7 +11,7 @@ const features = [
 ];
 
 const columns = [
-  { name: "CarbonLedger", vals: [true, true, true, true, true, true] },
+  { name: "CarbonZen", vals: [true, true, true, true, true, true] },
   { name: "Generic Apps", vals: [false, false, true, false, false, true] },
   { name: "Spreadsheets", vals: [true, false, false, false, false, true] },
 ];

@@ -1,5 +1,5 @@
 /**
- * CarbonLedger ML Emission Model
+ * CarbonZen ML Emission Model
  * ════════════════════════════════════════════════════════════════════════════
  * Model:       GradientBoostingRegressor (sklearn)
  * R² Score:    0.9950 (99.5% variance explained)
@@ -37,7 +37,7 @@ export const MODEL_META = {
 // base_per_kg: CO₂ kg emitted per kg of food consumed
 // organic_modifier: multiplier when food is organic
 // local_modifier: multiplier when food is locally sourced
-const FOOD_COEFFICIENTS: Record<string, {
+export const FOOD_COEFFICIENTS: Record<string, {
   base_per_kg: number;
   organic_modifier: number;
   local_modifier: number;
@@ -57,7 +57,7 @@ const FOOD_COEFFICIENTS: Record<string, {
 // ── Transport Coefficients (ML-learned) ─────────────────────────────────────
 // per_km_1pax: CO₂ kg per km for 1 passenger
 // passenger_reduction_factor: multiplier when shared (4 passengers vs 1)
-const TRANSPORT_COEFFICIENTS: Record<string, {
+export const TRANSPORT_COEFFICIENTS: Record<string, {
   per_km_1pax: number;
   passenger_reduction_factor: number;
 }> = {
@@ -76,7 +76,7 @@ const TRANSPORT_COEFFICIENTS: Record<string, {
 // ── Energy Coefficients (ML-learned) ────────────────────────────────────────
 // per_unit: CO₂ kg per kWh / unit of energy
 // green_modifier: multiplier when renewable/green energy tariff is active
-const ENERGY_COEFFICIENTS: Record<string, {
+export const ENERGY_COEFFICIENTS: Record<string, {
   per_unit: number;
   green_modifier: number;
 }> = {
@@ -93,7 +93,7 @@ const ENERGY_COEFFICIENTS: Record<string, {
 // new_item_co2: CO₂ kg for a new item purchase
 // secondhand_co2: CO₂ kg for a secondhand item (lifecycle analysis)
 // secondhand_saving_pct: % reduction by buying secondhand
-const SHOPPING_COEFFICIENTS: Record<string, {
+export const SHOPPING_COEFFICIENTS: Record<string, {
   new_item_co2: number;
   secondhand_co2: number;
   secondhand_saving_pct: number;

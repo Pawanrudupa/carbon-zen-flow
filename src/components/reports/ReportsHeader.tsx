@@ -30,7 +30,7 @@ const ReportsHeader = ({ isPremium }: Props) => {
           }}
         >
           <span className="text-xs text-[hsl(var(--warning))]">
-            Unlock full reports with CarbonLedger Premium — ₹299/month
+            Unlock full reports with CarbonZen Premium — $12/month
           </span>
           <Button
             size="sm"

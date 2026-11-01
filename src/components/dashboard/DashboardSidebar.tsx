@@ -86,14 +86,14 @@ const DashboardSidebar = ({
           <Link
             to="/dashboard"
             className={`flex items-center gap-2.5 flex-shrink-0 ${isCollapsed ? "justify-center" : "min-w-0"}`}
-            title="CarbonLedger"
+            title="CarbonZen"
           >
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
               <Leaf size={18} />
             </div>
             {!isCollapsed && (
               <span className="font-heading font-bold text-foreground text-sm tracking-tight whitespace-nowrap truncate">
-                CarbonLedger
+                CarbonZen
               </span>
             )}
           </Link>
@@ -187,7 +187,7 @@ const DashboardSidebar = ({
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                     <Leaf size={18} />
                   </div>
-                  <span className="font-heading font-bold text-foreground text-sm">CarbonLedger</span>
+                  <span className="font-heading font-bold text-foreground text-sm">CarbonZen</span>
                 </div>
                 <button
                   onClick={onCloseMobile}

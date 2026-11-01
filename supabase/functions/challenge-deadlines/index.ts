@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
 import { Resend } from "https://esm.sh/resend@3.2.0"
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -20,18 +19,18 @@ serve(async (req) => {
 
     if (userError) throw userError
     if (!users || users.length === 0) {
-       return new Response(JSON.stringify({ message: "No users opted in." }), { status: 200 })
+      return new Response(JSON.stringify({ message: "No users opted in." }), { status: 200 })
     }
 
     const now = new Date();
     const tomorrow = new Date(now.getTime() + (24 * 60 * 60 * 1000)); 
     const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? 'CarbonZen <onboarding@resend.dev>';
 
     let emailsSent = 0;
 
     // 2. Loop through users
     for (const user of users) {
-      
       // Fetch active challenges AND join the duration/title from the main challenges table
       const { data: activeChallenges, error: challengeError } = await supabaseAdmin
         .from('user_challenges') 
@@ -44,7 +43,7 @@ serve(async (req) => {
           )
         `) 
         .eq('user_id', user.id)
-        .is('completed_at', null) // Null means it is still active
+        .is('completed_at', null)
 
       if (challengeError) {
         console.error(`Error fetching challenges for ${user.id}:`, challengeError);
@@ -54,14 +53,10 @@ serve(async (req) => {
       if (!activeChallenges || activeChallenges.length === 0) continue;
 
       // 3. The Math Engine: Calculate deadlines dynamically
-      // Filter the active challenges to find ones expiring between NOW and TOMORROW
       const expiringChallenges = activeChallenges.filter((uc: any) => {
         const startDate = new Date(uc.started_at);
         const durationDays = uc.challenges.duration_days;
-        
-        // Calculate exact deadline timestamp
         const deadlineDate = new Date(startDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
-        
         return deadlineDate > now && deadlineDate <= tomorrow;
       });
 
@@ -86,27 +81,30 @@ serve(async (req) => {
           </div>
           
           <p style="color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7; padding-top: 15px;">
-            You are receiving this because you enabled Challenge Deadline alerts in Carbon Zen.
+            You are receiving this because you enabled Challenge Deadline alerts in CarbonZen.
           </p>
         </div>
       `;
 
-      // 5. Fire off the email
-      const resendResponse = await resend.emails.send({
-        from: 'Carbon Zen Challenges <onboarding@resend.dev>',
-        to: user.report_email,
-        subject: '⏳ 24 Hours Left: Complete your challenge!',
-        html: htmlReport,
-      });
-      
-      if (!resendResponse.error) {
-        emailsSent++;
+      try {
+        const resendResponse = await resend.emails.send({
+          from: fromEmail,
+          to: user.report_email,
+          subject: '⏳ 24 Hours Left: Complete your challenge!',
+          html: htmlReport,
+        });
+        
+        if (!resendResponse.error) {
+          emailsSent++;
+        }
+      } catch (err) {
+        console.error(`Failed sending challenge deadline to ${user.report_email}:`, err);
       }
     }
 
     return new Response(JSON.stringify({ message: "Deadline scanner complete", emailsSent }), { status: 200 })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Critical Error:", error)
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }

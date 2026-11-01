@@ -48,7 +48,7 @@ const BillingSection = () => {
           onClick={handleUpgrade}
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          Upgrade to Premium — <span className="font-mono">₹299/month</span>
+          Upgrade to Premium — <span className="font-mono">$12/month</span>
         </Button>
       </div>
 

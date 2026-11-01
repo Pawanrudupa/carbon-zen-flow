@@ -68,7 +68,7 @@ const DashboardHeader = ({ onOpenMobileMenu }: DashboardHeaderProps = {}) => {
             <Menu size={18} />
           </button>
           <Leaf className="text-primary flex-shrink-0" size={18} />
-          <span className="font-heading font-600 text-foreground text-sm hidden sm:inline">CarbonLedger</span>
+          <span className="font-heading font-600 text-foreground text-sm hidden sm:inline">CarbonZen</span>
           <span className="text-muted-foreground text-xs font-mono hidden md:inline">/ {month}</span>
         </div>
 
@@ -196,7 +196,7 @@ const DashboardHeader = ({ onOpenMobileMenu }: DashboardHeaderProps = {}) => {
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Leaf size={18} />
                 </div>
-                <span className="font-heading font-bold text-foreground text-sm">CarbonLedger</span>
+                <span className="font-heading font-bold text-foreground text-sm">CarbonZen</span>
               </div>
               <button
                 onClick={() => setMenuOpen(false)}

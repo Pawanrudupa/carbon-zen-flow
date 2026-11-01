@@ -34,9 +34,9 @@ const UpgradeCTA = () => {
         </div>
 
         <div className="text-right flex-shrink-0">
-          <p className="font-mono text-2xl font-bold text-foreground">₹299<span className="text-sm text-muted-foreground">/month</span></p>
+          <p className="font-mono text-2xl font-bold text-foreground">$12<span className="text-sm text-muted-foreground">/month</span></p>
           <p className="text-[10px] text-muted-foreground mt-1">
-            or ₹2,990/year (save 2 months)
+            or $99/year (save 2 months)
           </p>
           <Button
             onClick={handleUpgrade}

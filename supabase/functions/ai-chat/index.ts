@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -51,7 +50,7 @@ serve(async (req) => {
       const sanitizedInput = rawText.slice(0, 200)
 
       const extractionPrompt = `
-You are an expert NLP parser for CarbonLedger, a carbon tracking app.
+You are an expert NLP parser for CarbonZen, a carbon tracking app.
 Your task is to parse a user's natural language activity into structured fields that pre-fill an existing carbon logging form.
 
 ALLOWED CATEGORIES:
@@ -111,7 +110,9 @@ CONFIDENCE GUIDELINES:
 DO NOT guess or invent facts if the input is ambiguous.
 
 User text to parse:
-"${sanitizedInput}"
+"""
+${sanitizedInput}
+"""
 `.trim()
 
       const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
@@ -171,20 +172,15 @@ User text to parse:
         }
       }
 
-      // Ensure fallback properties exist
-      if (!parsedResult.raw_input) parsedResult.raw_input = sanitizedInput
-      if (!parsedResult.confidence) parsedResult.confidence = parsedResult.category ? 'medium' : 'low'
-
-      return new Response(
-        JSON.stringify({
-          ...parsedResult,
-          parsed: parsedResult,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return new Response(JSON.stringify(parsedResult), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     }
 
-    // 3. Fetch ALL Context Data simultaneously for maximum speed (Chat / Cards mode)
+    // ── STANDARD CHAT & CARDS MODE ─────────────────────────────────────────
+
+    // 3. Fetch User's Data Context (Past 30 Days)
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
@@ -194,29 +190,42 @@ User text to parse:
       { data: household },
       { data: analytics }
     ] = await Promise.all([
-      supabaseClient.from('entries').select('co2_kg, category, logged_at').eq('user_id', user.id).gte('logged_at', thirtyDaysAgo.toISOString()),
-      
-      // 👇 THIS IS THE FIX: We tell Supabase to fetch the progress AND the matching challenge title/description!
-      supabaseClient.from('user_challenges').select('*, challenges(title, description)').eq('user_id', user.id),
-      
-      // Keeping the household_members table name correct for your schema
-      supabaseClient.from('household_members').select('*, households(*)').eq('user_id', user.id).maybeSingle(),
-      
-      supabaseClient.from('user_stats').select('*').eq('user_id', user.id).maybeSingle()
+      supabaseClient
+        .from('entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('logged_at', thirtyDaysAgo.toISOString())
+        .order('logged_at', { ascending: false })
+        .limit(50),
+      supabaseClient
+        .from('user_challenges')
+        .select('*, challenges(*)')
+        .eq('user_id', user.id)
+        .limit(10),
+      supabaseClient
+        .from('household_members')
+        .select('*, households(*)')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabaseClient
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle(),
     ])
 
-    const totalEmissions = entries?.reduce((sum, item) => sum + (Number(item.co2_kg) || 0), 0) || 0;
+    const totalEmissions = entries?.reduce((acc, curr) => acc + (Number(curr.co2_kg) || 0), 0) || 0
 
-    // 4. Construct the Master System Prompt based on request type
-    let systemPrompt = '';
-    
+    // 4. Construct System Prompt
+    let systemPrompt = ''
+
     if (type === 'cards') {
       systemPrompt = `
-        You are an analytical engine. Review the user's carbon data. 
-
-        Output ONLY a valid JSON object with exactly three keys: 
-        'pattern' (a 1-sentence observation about their habits), 
-        'action' (a highly specific 1-sentence reduction tip), and 
+        You are the AI analytics engine for CarbonZen.
+        Based ONLY on the user's carbon tracking data below, generate three dynamic cards formatted as a valid JSON object.
+        The JSON object must have exactly these three keys:
+        'pattern' (a 1-sentence observation about their highest emitting habit or trend),
+        'action' (a 1-sentence specific recommendation based on their active challenges or high categories), and
         'forecast' (a 1-sentence projection of their month-end total). 
         Do not include markdown formatting like \`\`\`json.
         
@@ -230,7 +239,7 @@ User text to parse:
       `
     } else {
       systemPrompt = `
-        You are the elite AI assistant for CarbonLedger.
+        You are the elite AI assistant for CarbonZen.
         The user's total carbon footprint for the last 30 days is ${totalEmissions.toFixed(1)} kg.
         
         Analyze the following secure user data to answer their query. Provide highly personalized, actionable advice based ONLY on these facts.
@@ -244,7 +253,10 @@ User text to parse:
 
         If a data section is empty, you can gently encourage the user to fill out that section in their dashboard. Be concise, brilliant, and friendly.
         
-        User query: ${query}
+        User query:
+        """
+        ${query}
+        """
       `
     }
 
@@ -260,7 +272,13 @@ User text to parse:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: systemPrompt }] }]
+          contents: [{ parts: [{ text: systemPrompt }] }],
+          generationConfig: type === 'cards' ? {
+            responseMimeType: "application/json",
+            temperature: 0.2,
+          } : {
+            temperature: 0.7,
+          }
         })
       })
 
@@ -291,7 +309,7 @@ User text to parse:
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Edge Function Error:", error.message)
     const isRateLimit = error.message.includes("429") || error.message.includes("RESOURCE_EXHAUSTED") || error.message.includes("rate limit");
     const isAuthError = error.message.includes("Authorization") || error.message.includes("rejected the token");

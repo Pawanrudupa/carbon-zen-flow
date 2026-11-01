@@ -1,5 +1,5 @@
 """
-CarbonLedger ML Emission Estimation Model
+CarbonZen ML Emission Estimation Model
 ==========================================
 Algorithm:  GradientBoostingRegressor (scikit-learn)
 R² Score:   0.9950 (test set)  |  CV R²: 0.9965 (5-fold)

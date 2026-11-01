@@ -28,7 +28,7 @@ export const generateCSV = (data: CSVData): void => {
   const lines: string[] = []
 
   // ── Header ────────────────────────────────────────────
-  lines.push("CarbonLedger — Personal Carbon Export")
+  lines.push("CarbonZen — Personal Carbon Export")
   lines.push(row("Period", data.period))
   lines.push(row("Generated", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })))
   lines.push(row("Total CO₂", `${data.total.toFixed(2)} kg`))
@@ -69,7 +69,7 @@ export const generateCSV = (data: CSVData): void => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = `CarbonLedger_Export_${data.period.replace(/\s+/g, "_")}.csv`
+  a.download = `CarbonZen_Export_${data.period.replace(/\s+/g, "_")}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

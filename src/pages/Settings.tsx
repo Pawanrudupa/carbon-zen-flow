@@ -59,7 +59,7 @@ const Settings = () => {
       <div className="max-w-6xl mx-auto w-full">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage your CarbonLedger experience</p>
+          <p className="text-muted-foreground text-sm mt-1">Manage your CarbonZen experience</p>
         </motion.div>
 
         <div className="flex flex-col md:flex-row gap-8 mt-8">

@@ -55,10 +55,7 @@ const DangerZoneSection = () => {
       return;
     }
 
-    const confirmed = window.confirm(
-      "WARNING: This will permanently delete your account, authentication credentials, and all logs. Proceed?"
-    );
-    if (!confirmed) return;
+
 
     try {
       setIsDeleting(true);
