@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import { Zap, Flame, Thermometer, Leaf } from "lucide-react";
 import { useState } from "react";
+import { ENERGY_COEFFICIENTS } from "@/utils/mlModel";
 
 const energyTypes = [
-  { key: "electricity", label: "Electricity", icon: Zap, co2: 0.82, unit: "kWh", color: "hsl(var(--chart-amber))" },
-  { key: "gas", label: "Natural Gas", icon: Flame, co2: 2.04, unit: "m³", color: "hsl(var(--chart-blue))" },
-  { key: "heating", label: "Heating", icon: Thermometer, co2: 1.5, unit: "kWh", color: "hsl(var(--destructive))" },
+  { key: "electricity", label: "Electricity", icon: Zap, co2: ENERGY_COEFFICIENTS.electricity_coal.per_unit, unit: "kWh", color: "hsl(var(--chart-amber))" },
+  { key: "gas", label: "Natural Gas", icon: Flame, co2: ENERGY_COEFFICIENTS.natural_gas.per_unit, unit: "m³", color: "hsl(var(--chart-blue))" },
+  { key: "heating", label: "Heating", icon: Thermometer, co2: ENERGY_COEFFICIENTS.heating_oil.per_unit, unit: "kWh", color: "hsl(var(--destructive))" },
 ];
 
 interface EnergyFormProps {
@@ -17,7 +18,7 @@ const EnergyForm = ({ formData, update }: EnergyFormProps) => {
   const selected = formData.energyType || "electricity";
   const units = parseFloat(formData.units || "0");
   const isGreen = formData.green === "true";
-  const typeData = energyTypes.find(t => t.key === selected)!;
+  const typeData = energyTypes.find(t => t.key === selected) || energyTypes[0];
   const [hoveredMeter, setHoveredMeter] = useState<number | null>(null);
 
   // Generate meter bars
@@ -48,34 +49,29 @@ const EnergyForm = ({ formData, update }: EnergyFormProps) => {
                     ? "border-primary/30"
                     : "border-primary/5 bg-muted/20 hover:border-primary/15"
                 }`}
+                style={active ? {
+                  backgroundColor: `${type.color}10`,
+                  boxShadow: `0 0 25px ${type.color}15`,
+                } : {}}
               >
-                {/* Glow background when active */}
+                <div
+                  className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: active ? `${type.color}20` : "hsl(var(--muted))" }}
+                >
+                  <Icon size={24} style={{ color: active ? type.color : "hsl(var(--muted-foreground))" }} />
+                </div>
+                <span className={`text-sm font-heading font-600 block ${active ? "text-foreground" : "text-muted-foreground"}`}>
+                  {type.label}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60 mt-1 block">
+                  {type.co2.toFixed(2)} kg CO₂/{type.unit}
+                </span>
                 {active && (
                   <motion.div
-                    layoutId="energy-glow"
-                    className="absolute inset-0 rounded-xl"
-                    style={{
-                      background: `radial-gradient(circle at center, ${type.color}15, transparent 70%)`,
-                    }}
+                    layoutId="energy-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
                   />
                 )}
-                <div className="relative z-10">
-                  <div
-                    className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                    style={{
-                      backgroundColor: active ? `${type.color}20` : "hsl(var(--muted))",
-                      boxShadow: active ? `0 0 20px ${type.color}30` : "none",
-                    }}
-                  >
-                    <Icon size={22} style={{ color: active ? type.color : "hsl(var(--muted-foreground))" }} />
-                  </div>
-                  <span className={`text-sm font-heading font-600 block ${active ? "text-foreground" : "text-muted-foreground"}`}>
-                    {type.label}
-                  </span>
-                  <span className="text-[10px] font-mono text-muted-foreground/50 mt-1 block">
-                    {type.co2} kg CO₂/{type.unit}
-                  </span>
-                </div>
               </motion.button>
             );
           })}

@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { Leaf, Drumstick, Wheat, Milk, Salad } from "lucide-react";
+import { FOOD_COEFFICIENTS } from "@/utils/mlModel";
 
 const foodItems = [
-  { key: "vegetables", label: "Vegetables", icon: Salad, co2: 2, color: "hsl(var(--primary))" },
-  { key: "chicken", label: "Chicken", icon: Drumstick, co2: 6.9, color: "hsl(var(--chart-amber))" },
-  { key: "beef", label: "Beef", icon: Drumstick, co2: 27, color: "hsl(var(--destructive))" },
-  { key: "dairy", label: "Dairy", icon: Milk, co2: 3.2, color: "hsl(var(--chart-blue))" },
-  { key: "grains", label: "Grains", icon: Wheat, co2: 1.4, color: "hsl(var(--chart-teal))" },
+  { key: "vegetables", label: "Vegetables", icon: Salad, co2: FOOD_COEFFICIENTS.vegetables.base_per_kg, color: "hsl(var(--primary))" },
+  { key: "chicken", label: "Chicken", icon: Drumstick, co2: FOOD_COEFFICIENTS.chicken.base_per_kg, color: "hsl(var(--chart-amber))" },
+  { key: "beef", label: "Beef", icon: Drumstick, co2: FOOD_COEFFICIENTS.beef.base_per_kg, color: "hsl(var(--destructive))" },
+  { key: "dairy", label: "Dairy", icon: Milk, co2: FOOD_COEFFICIENTS.dairy.base_per_kg, color: "hsl(var(--chart-blue))" },
+  { key: "grains", label: "Grains", icon: Wheat, co2: FOOD_COEFFICIENTS.grains.base_per_kg, color: "hsl(var(--chart-teal))" },
 ];
 
 interface FoodFormProps {
@@ -17,6 +18,7 @@ interface FoodFormProps {
 const FoodForm = ({ formData, update }: FoodFormProps) => {
   const selected = formData.mealType || "vegetables";
   const portion = parseFloat(formData.portion || "0.3");
+  const selectedFood = foodItems.find(f => f.key === selected) || foodItems[0];
 
   return (
     <div className="space-y-6">
@@ -67,23 +69,23 @@ const FoodForm = ({ formData, update }: FoodFormProps) => {
       {/* CO₂ impact bar for the selected ingredient */}
       <div className="glass-card rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-muted-foreground font-mono uppercase">Impact per kg</span>
+          <span className="text-xs text-muted-foreground font-mono uppercase">ML Model Intensity</span>
           <span className="font-mono text-sm text-foreground">
-            {foodItems.find(f => f.key === selected)?.co2} kg CO₂
+            {selectedFood.co2.toFixed(1)} kg CO₂/kg
           </span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min(((foodItems.find(f => f.key === selected)?.co2 || 2) / 27) * 100, 100)}%` }}
+            animate={{ width: `${Math.min((selectedFood.co2 / FOOD_COEFFICIENTS.beef.base_per_kg) * 100, 100)}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            style={{ backgroundColor: foodItems.find(f => f.key === selected)?.color }}
+            style={{ backgroundColor: selectedFood.color }}
           />
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-[10px] text-muted-foreground/50 font-mono">Low</span>
-          <span className="text-[10px] text-muted-foreground/50 font-mono">High (Beef: 27)</span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">High (Beef: {FOOD_COEFFICIENTS.beef.base_per_kg.toFixed(1)})</span>
         </div>
       </div>
 
@@ -100,58 +102,82 @@ const FoodForm = ({ formData, update }: FoodFormProps) => {
         />
       </div>
 
-      {/* Portion slider with visual plate */}
+      {/* Portion size — visual plates */}
       <div>
-        <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-3 block">
-          Portion Size
-        </label>
-        <div className="flex items-center gap-6">
-          <div className="relative flex-shrink-0">
-            <motion.div
-              animate={{ scale: 0.6 + portion * 0.8 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="w-20 h-20 rounded-full border-2 border-primary/20 flex items-center justify-center"
-              style={{ background: `radial-gradient(circle, hsl(var(--primary) / 0.15), transparent)` }}
-            >
-              <span className="font-mono text-lg font-bold text-primary">{portion.toFixed(1)}</span>
-            </motion.div>
-            <span className="text-[10px] text-muted-foreground/50 font-mono text-center block mt-1">kg</span>
-          </div>
-          <div className="flex-1 space-y-2">
-            <input
-              type="range"
-              min="0.1"
-              max="2"
-              step="0.1"
-              value={portion}
-              onChange={(e) => update("portion", e.target.value)}
-              className="w-full accent-primary h-1.5 bg-muted rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,197,94,0.4)]"
-            />
-            <div className="flex justify-between text-[10px] text-muted-foreground/40 font-mono">
-              <span>Snack</span>
-              <span>Regular</span>
-              <span>Feast</span>
-            </div>
-          </div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+            Portion Size
+          </span>
+          <span className="font-mono text-xs text-primary font-bold">
+            {portion >= 0.8 ? "Feast" : portion >= 0.5 ? "Hearty" : portion >= 0.3 ? "Standard" : "Snack"} · {(portion * 1000).toFixed(0)}g
+          </span>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "Snack", grams: 150, value: "0.15" },
+            { label: "Standard", grams: 300, value: "0.3" },
+            { label: "Hearty", grams: 500, value: "0.5" },
+            { label: "Feast", grams: 800, value: "0.8" },
+          ].map((p) => {
+            const active = formData.portion === p.value || (!formData.portion && p.value === "0.3");
+            return (
+              <button
+                key={p.value}
+                onClick={() => update("portion", p.value)}
+                className={`py-3 px-2 rounded-lg border text-center transition-all ${
+                  active
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-primary/5 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                }`}
+              >
+                <span className="text-xs font-mono font-semibold block">{p.label}</span>
+                <span className="text-[10px] text-muted-foreground/50 font-mono">{p.grams}g</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Organic toggle — pill style */}
-      <div
-        className="flex items-center justify-between p-3 rounded-lg border border-primary/5 bg-muted/10 cursor-pointer hover:border-primary/15 transition-colors"
-        onClick={() => update("organic", formData.organic === "true" ? "false" : "true")}
-      >
-        <div className="flex items-center gap-3">
-          <Leaf size={16} className="text-primary" />
-          <span className="text-sm text-foreground">Organic produce</span>
-        </div>
-        <div className={`w-10 h-5 rounded-full transition-colors relative ${formData.organic === "true" ? "bg-primary" : "bg-muted"}`}>
-          <motion.div
-            className="absolute top-0.5 w-4 h-4 rounded-full bg-foreground"
-            animate={{ left: formData.organic === "true" ? 22 : 2 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          />
-        </div>
+      {/* Toggles — organic & local */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => update("organic", formData.organic === "true" ? "false" : "true")}
+          className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left ${
+            formData.organic === "true"
+              ? "border-primary/30 bg-primary/5"
+              : "border-primary/5 bg-muted/20 hover:border-primary/15"
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+            formData.organic === "true" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+          }`}>
+            <Leaf size={16} />
+          </div>
+          <div>
+            <span className="text-xs font-heading font-600 text-foreground block">Organic</span>
+            <span className="text-[10px] text-muted-foreground font-mono">Certified organic</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => update("local", formData.local === "true" ? "false" : "true")}
+          className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left ${
+            formData.local === "true"
+              ? "border-primary/30 bg-primary/5"
+              : "border-primary/5 bg-muted/20 hover:border-primary/15"
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+            formData.local === "true" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+          }`}>
+            <span className="text-xs">📍</span>
+          </div>
+          <div>
+            <span className="text-xs font-heading font-600 text-foreground block">Locally Sourced</span>
+            <span className="text-[10px] text-muted-foreground font-mono">&lt; 50 km radius</span>
+          </div>
+        </button>
       </div>
     </div>
   );

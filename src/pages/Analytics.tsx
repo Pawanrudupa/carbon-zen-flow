@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +31,22 @@ const fadeSlide = {
 const Analytics = () => {
   const [dateRange, setDateRange] = useState("Last 3 Months");
   const { user } = useAuth();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-targets", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("monthly_target")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const monthlyTarget = Number(userProfile?.monthly_target) || 350;
 
   const { data: entries = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["analytics-entries", user?.id, dateRange],
@@ -85,7 +101,7 @@ const Analytics = () => {
         ) : (
           <>
             <motion.div variants={fadeSlide} className="mt-6 min-w-0">
-              <TrendChart entries={entries} dateRange={dateRange} />
+              <TrendChart entries={entries} dateRange={dateRange} monthlyTarget={monthlyTarget} />
             </motion.div>
 
             <motion.div variants={fadeSlide} className="mt-6 min-w-0">
