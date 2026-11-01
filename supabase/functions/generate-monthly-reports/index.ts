@@ -1,11 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
 import { Resend } from "https://esm.sh/resend@3.2.0"
 
-// Initialize Resend with your secret API key
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   try {
     // 1. Initialize Supabase Admin Client
     const supabaseAdmin = createClient(
@@ -22,16 +20,16 @@ serve(async (req) => {
 
     if (userError) throw userError
 
-    console.log(`Found ${users.length} users opted in for reports.`)
+    console.log(`Found ${users?.length || 0} users opted in for reports.`)
 
     // 3. Calculate date range for PREVIOUS month
     const now = new Date();
     const firstDayLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString();
     const lastDayLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999)).toISOString();
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? 'CarbonZen <onboarding@resend.dev>';
 
     // 4. Loop through users
-    for (const user of users) {
-      
+    for (const user of (users || [])) {
       const { data: entries, error: entriesError } = await supabaseAdmin
         .from('entries') 
         .select('category, co2_kg')
@@ -67,7 +65,7 @@ serve(async (req) => {
       // Build HTML Report
       const htmlReport = `
         <div style="font-family: sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-          <h2 style="color: #10B981;">Carbon Zen: Monthly Impact 🌍</h2>
+          <h2 style="color: #10B981;">CarbonZen: Monthly Impact 🌍</h2>
           <p>Your automated monthly carbon report is ready.</p>
           
           <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
@@ -82,36 +80,38 @@ serve(async (req) => {
           ${totalEmissions === 0 ? '<p style="color: #F59E0B;"><em>It looks like you didn\'t log any entries last month. Ready to get back on track?</em></p>' : ''}
           
           <p style="color: #71717a; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
-            You are receiving this because you enabled Auto-Reports in your Carbon Zen settings.
+            You are receiving this because you enabled Auto-Reports in your CarbonZen settings.
           </p>
         </div>
       `;
 
-      // Send via Resend and capture the response
-      const resendResponse = await resend.emails.send({
-        from: 'Carbon Zen Reports <onboarding@resend.dev>',
-        to: user.report_email,
-        subject: 'Your Monthly Carbon Impact Report 🌱',
-        html: htmlReport,
-      });
-      
-      // DEBUG LOGGING: Did Resend block it?
-      if (resendResponse.error) {
-        console.error(`Resend blocked email to ${user.report_email}:`, resendResponse.error);
-      } else {
-        console.log(`Report successfully sent to: ${user.report_email}`);
+      try {
+        const resendResponse = await resend.emails.send({
+          from: fromEmail,
+          to: user.report_email,
+          subject: 'Your Monthly Carbon Impact Report 🌱',
+          html: htmlReport,
+        });
+        
+        if (resendResponse.error) {
+          console.error(`Resend blocked email to ${user.report_email}:`, resendResponse.error);
+        } else {
+          console.log(`Report successfully sent to: ${user.report_email}`);
+        }
+      } catch (sendErr) {
+        console.error(`Failed sending monthly report to ${user.report_email}:`, sendErr);
       }
     }
 
     return new Response(JSON.stringify({ 
       message: "Reports generation complete", 
-      processed: users?.length
+      processed: users?.length || 0
     }), {
       headers: { "Content-Type": "application/json" },
       status: 200,
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Critical Error:", error)
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }

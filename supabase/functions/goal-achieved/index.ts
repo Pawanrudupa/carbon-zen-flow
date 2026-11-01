@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
 import { Resend } from "https://esm.sh/resend@3.2.0"
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   try {
     // 1. Parse the incoming Webhook payload
     const payload = await req.json()
@@ -66,6 +65,7 @@ serve(async (req) => {
 
     const isLimitBreached = crossedLimit;
     const appUrl = Deno.env.get('APP_URL') ?? 'https://carbon-zen-flow.vercel.app';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? 'CarbonZen <onboarding@resend.dev>';
     const subject = isLimitBreached 
       ? "⚠️ Carbon Limit Reached: Monthly budget exceeded"
       : "⚡ Carbon Alert: You've reached 80% of your monthly budget";
@@ -91,21 +91,26 @@ serve(async (req) => {
           <a href="${appUrl}/dashboard" style="background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">View Carbon Dashboard</a>
         </div>
         <p style="color: #9ca3af; font-size: 11px; margin-top: 30px; border-top: 1px solid #f3f4f6; padding-top: 15px;">
-          You are receiving this because you enabled Carbon Budget alerts in your Carbon Zen settings.
+          You are receiving this because you enabled Carbon Budget alerts in your CarbonZen settings.
         </p>
       </div>
     `;
 
-    await resend.emails.send({
-      from: 'Carbon Zen Alerts <onboarding@resend.dev>',
-      to: user.report_email,
-      subject,
-      html: htmlReport,
-    });
+    try {
+      await resend.emails.send({
+        from: fromEmail,
+        to: user.report_email,
+        subject,
+        html: htmlReport,
+      });
+      console.log(`Budget alert email sent to: ${user.report_email}`);
+    } catch (sendErr) {
+      console.error(`Failed sending budget alert to ${user.report_email}:`, sendErr);
+    }
 
-    return new Response(JSON.stringify({ message: "Budget alert email sent successfully" }), { status: 200 })
+    return new Response(JSON.stringify({ message: "Budget alert processed" }), { status: 200 })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Critical Webhook Error:", error)
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
