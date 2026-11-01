@@ -54,11 +54,11 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
   // 0 kg = subtle empty cell
   // > 0 = low emissions (green), moderate (amber), high (red)
   const getColor = (co2: number) => {
-    if (co2 === 0) return "hsl(142 71% 45% / 0.08)";
+    if (co2 === 0) return "hsl(var(--primary) / 0.08)";
     const ratio = (co2 - minCo2) / (maxCo2 - minCo2 || 1);
     if (ratio > 0.75) return "hsl(0 84% 60% / 0.85)";
     if (ratio > 0.4) return "hsl(45 93% 47% / 0.85)";
-    return "hsl(142 71% 45% / 0.85)";
+    return "hsl(var(--primary) / 0.85)";
   };
 
   const getTooltip = (idx: number) => {
@@ -76,9 +76,13 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
       </h3>
 
       <div className="overflow-x-auto pt-6 -mt-2">
-        <div className="inline-flex flex-col">
-          {/* Month labels top — aligned with columns without duplicate offset */}
-          <div className="relative flex ml-[28px] mb-1 h-4">
+        <div
+          role="grid"
+          aria-label="26-week carbon emissions activity heatmap"
+          className="inline-flex flex-col min-w-max"
+        >
+          {/* Month labels top */}
+          <div className="relative flex ml-[28px] mb-1 h-4" aria-hidden="true">
             {(() => {
               const monthLabels: { label: string; col: number }[] = [];
               let lastMonth = -1;
@@ -104,8 +108,16 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
 
           {/* 7 rows (Mon–Sun), day labels left (M W F only) */}
           {Array.from({ length: 7 }, (_, row) => (
-            <div key={row} className="flex items-center" style={{ height: 13, marginBottom: 3 }}>
-              <span className="text-[9px] font-mono text-muted-foreground/40 w-[25px] text-right mr-[3px]">
+            <div
+              key={row}
+              role="row"
+              className="flex items-center"
+              style={{ height: 13, marginBottom: 3 }}
+            >
+              <span
+                className="text-[9px] font-mono text-muted-foreground/40 w-[25px] text-right mr-[3px]"
+                aria-hidden="true"
+              >
                 {DAY_LABELS[row]}
               </span>
               <div className="flex" style={{ gap: 3 }}>
@@ -116,7 +128,10 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
                   return (
                     <motion.div
                       key={col}
-                      className="rounded-[2px] cursor-pointer relative"
+                      role="gridcell"
+                      tabIndex={0}
+                      aria-label={getTooltip(idx)}
+                      className="rounded-[2px] cursor-pointer relative focus:outline-none focus:ring-1 focus:ring-primary"
                       style={{ width: 13, height: 13, backgroundColor: getColor(d.co2) }}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -124,11 +139,14 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
                       whileHover={{ scale: 1.5, transition: { duration: 0.1 } }}
                       onMouseEnter={() => setHovered(idx)}
                       onMouseLeave={() => setHovered(null)}
+                      onFocus={() => setHovered(idx)}
+                      onBlur={() => setHovered(null)}
                     >
                       {hovered === idx && (
                         <div
-                          className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-mono text-foreground whitespace-nowrap z-50 shadow-lg"
-                          style={{ background: "#111A14", border: "1px solid rgba(34,197,94,0.2)" }}
+                          role="tooltip"
+                          className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-mono text-foreground whitespace-nowrap z-50 shadow-lg pointer-events-none"
+                          style={{ background: "#111A14", border: "1px solid hsl(var(--primary) / 0.2)" }}
                         >
                           {getTooltip(idx)}
                         </div>
@@ -143,11 +161,11 @@ const ActivityHeatmap = ({ entries }: ActivityHeatmapProps) => {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 mt-4 justify-end">
+      <div className="flex items-center gap-2 mt-4 justify-end" aria-hidden="true">
         <span className="text-[9px] text-muted-foreground/40 font-mono">No data</span>
-        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(142 71% 45% / 0.08)" }} />
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(var(--primary) / 0.08)" }} />
         <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">Low CO₂</span>
-        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(142 71% 45% / 0.85)" }} />
+        <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(var(--primary) / 0.85)" }} />
         <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">Moderate</span>
         <div className="rounded-[2px]" style={{ width: 10, height: 10, backgroundColor: "hsl(45 93% 47% / 0.85)" }} />
         <span className="text-[9px] text-muted-foreground/40 font-mono ml-2">High CO₂</span>

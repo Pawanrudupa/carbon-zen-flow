@@ -35,12 +35,12 @@ export const SPRING = {
 export const pageVariants: Variants = {
   initial: {
     opacity: 0,
-    x: 20,
-    scale: 0.98,
+    y: 6,
+    scale: 0.99,
   },
   animate: {
     opacity: 1,
-    x: 0,
+    y: 0,
     scale: 1,
     transition: {
       duration: DURATION.fast,
@@ -51,7 +51,8 @@ export const pageVariants: Variants = {
   },
   exit: {
     opacity: 0,
-    scale: 0.98,
+    y: -4,
+    scale: 0.99,
     transition: {
       duration: 0.2,
       ease: EASE.inOut,
@@ -215,4 +216,3 @@ export const getMagneticOffset = (
     y: dy * strength,
   };
 };
-

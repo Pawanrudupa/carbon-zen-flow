@@ -39,7 +39,7 @@ const CarbonOrb = () => {
   const ratio = total / target;
   const progress = Math.min(ratio * 100, 100);
   const color = ratio < 0.8 ? "text-primary" : ratio <= 1 ? "text-chart-amber" : "text-destructive";
-  const strokeColor = ratio < 0.8 ? "hsl(142 71% 45%)" : ratio <= 1 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
+  const strokeColor = ratio < 0.8 ? "hsl(var(--primary))" : ratio <= 1 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
   const circumference = 2 * Math.PI * 120;
   const hasEntries = total > 0;
 
@@ -67,7 +67,7 @@ const CarbonOrb = () => {
               style={{
                 width: "60%",
                 height: "60%",
-                background: `radial-gradient(circle, hsl(142 71% 45% / 0.12) 0%, transparent 70%)`,
+                background: `radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)`,
               }}
             />
 
@@ -77,11 +77,11 @@ const CarbonOrb = () => {
               animate={{ rotate: 360 }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             >
-              <circle cx="150" cy="150" r="142" fill="none" stroke="hsl(142 71% 45% / 0.15)" strokeWidth="1" strokeDasharray="6 10" />
+              <circle cx="150" cy="150" r="142" fill="none" stroke="hsl(var(--primary) / 0.15)" strokeWidth="1" strokeDasharray="6 10" />
             </motion.svg>
 
             <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
-              <circle cx="150" cy="150" r="120" fill="none" stroke="hsl(142 71% 45% / 0.06)" strokeWidth="3" />
+              <circle cx="150" cy="150" r="120" fill="none" stroke="hsl(var(--primary) / 0.06)" strokeWidth="3" />
               <motion.circle
                 cx="150" cy="150" r="120" fill="none"
                 stroke={strokeColor} strokeWidth="3" strokeLinecap="round"
