@@ -17,7 +17,7 @@ const SolutionSection = () => (
         viewport={{ once: true }}
         className="font-heading font-700 text-3xl md:text-4xl text-foreground text-center"
       >
-        CarbonLedger is <span className="text-gradient-green">different.</span>
+        CarbonZen is <span className="text-gradient-green">different.</span>
       </motion.h2>
       <div className="mt-16 flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin">
         {features.filter(Boolean).map((f, i) => {

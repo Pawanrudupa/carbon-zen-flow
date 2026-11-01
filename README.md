@@ -1,8 +1,8 @@
-# CarbonLedger — Climate Operations Center
+# CarbonZen — Climate Operations Center
 
 > **"Your planet. Your numbers. Your move."**
 
-CarbonLedger is a full-stack personal carbon intelligence platform built on React + Vite + Supabase. It transforms raw lifestyle choices into real-time emission data using a trained machine learning model, lets users log activity in plain English via natural-language parsing, surfaces AI-generated insights grounded in the user's own data, drives behavior change through a gamified challenge system, and enables households to track and reduce their collective carbon footprint — all wrapped in a NASA mission-control aesthetic.
+CarbonZen is a full-stack personal carbon intelligence platform built on React + Vite + Supabase. It transforms raw lifestyle choices into real-time emission data using a trained machine learning model, lets users log activity in plain English via natural-language parsing, surfaces AI-generated insights grounded in the user's own data, drives behavior change through a gamified challenge system, and enables households to track and reduce their collective carbon footprint — all wrapped in a NASA mission-control aesthetic.
 
 ---
 
@@ -35,7 +35,7 @@ CarbonLedger is a full-stack personal carbon intelligence platform built on Reac
 
 ## 1. Project Overview
 
-CarbonLedger gives users full visibility into their personal carbon footprint across four emission categories and drives sustained reduction through machine learning, AI, gamification, and social accountability.
+CarbonZen gives users full visibility into their personal carbon footprint across four emission categories and drives sustained reduction through machine learning, AI, gamification, and social accountability.
 
 ### Core Feature Matrix
 
@@ -73,7 +73,6 @@ CarbonLedger gives users full visibility into their personal carbon footprint ac
 | Styling | Tailwind CSS | ^3.4.17 |
 | Animations | Framer Motion | ^12.38.0 |
 | Animations (Physics) | @react-spring/web | ^10.0.3 |
-| Advanced Animations | GSAP | ^3.15.0 |
 | Charts | Recharts | ^2.15.4 |
 | State / Async | TanStack React Query | ^5.83.0 |
 | Database & Auth | Supabase (PostgreSQL + Auth) | ^2.102.1 |
@@ -82,7 +81,6 @@ CarbonLedger gives users full visibility into their personal carbon footprint ac
 | Icons | Lucide React | ^0.462.0 |
 | Toast Notifications | Sonner | ^1.7.4 |
 | UI Components | Radix UI (full suite, incl. Popover Portal) | Various |
-| Lottie Animations | lottie-react | ^2.4.1 |
 | Date Utilities | date-fns | ^3.6.0 |
 | **ML — Serving** | Custom-trained GradientBoostingRegressor, coefficients exported to TypeScript | — |
 | **ML — Training** | Python, scikit-learn (offline training pipeline, `train_model.py`) | — |
@@ -126,11 +124,11 @@ carbon-zen-flow/
 │   │   │   ├── ParticleHero.tsx         # Multi-layer particle system
 │   │   │   ├── AuthRedirectScreen.tsx   # Minimal loading screen shown during OAuth callback (no landing-page flash)
 │   │   │   ├── ProblemSection.tsx       # The climate problem statement
-│   │   │   ├── SolutionSection.tsx      # CarbonLedger solution
+│   │   │   ├── SolutionSection.tsx      # CarbonZen solution
 │   │   │   ├── HowItWorksSection.tsx    # 3-step explainer
 │   │   │   ├── ComparisonSection.tsx    # Free vs Premium comparison
 │   │   │   ├── TestimonialsSection.tsx  # Social proof
-│   │   │   ├── PricingSection.tsx       # ₹299/month premium pricing
+│   │   │   ├── PricingSection.tsx       # /month premium pricing
 │   │   │   └── Footer.tsx               # Site footer
 │   │   │
 │   │   ├── dashboard/                   # Core dashboard widgets
@@ -491,7 +489,7 @@ Cinematic split-screen hero with:
 - Sections: Problem → Solution → How It Works → Comparison → Testimonials → Pricing → Footer
 - **Always renders in a fixed green theme**, regardless of any signed-in user's personal accent color — the public marketing page never inherits per-account theming (see [Section 13](#13-theme-system))
 
-**Pricing**: Free tier + Premium at ₹299/month
+**Pricing**: Free tier + Premium at /month
 
 ---
 
@@ -671,7 +669,7 @@ const queryClient = new QueryClient({
 
 ## 10. Machine Learning Emission Model
 
-CarbonLedger's carbon estimates are produced by a trained regression model rather than a static emission-factor lookup table.
+CarbonZen's carbon estimates are produced by a trained regression model rather than a static emission-factor lookup table.
 
 ### Model Details
 
@@ -885,14 +883,14 @@ sequenceDiagram
     GR->>SB: INSERT into reports table
     SB-->>GR: Saved
     GR->>PDF: generatePDF(reportData)
-    PDF->>FS: doc.save("CarbonLedger_Report.pdf")
+    PDF->>FS: doc.save("CarbonZen_Report.pdf")
     GR->>U: toast.success("PDF downloaded!")
 ```
 
 ### PDF Structure (3 Pages)
 
 **Page 1 — Cover & Summary:**
-- CarbonLedger branded header (dark background)
+- CarbonZen branded header (dark background)
 - User name + report period
 - Total CO₂ (large green number)
 - Delta vs last month + status badge
@@ -907,7 +905,7 @@ sequenceDiagram
 **Page 3 — Insights & Challenges:**
 - AI insights (all detected patterns)
 - Active challenges progress
-- CarbonLedger footer + generated timestamp
+- CarbonZen footer + generated timestamp
 
 ### CSV Export
 
@@ -1105,7 +1103,7 @@ The project auto-deploys via **Vercel**, connected directly to this GitHub repos
 
 ## 22. Design Language
 
-CarbonLedger uses a **"Climate Mission Control"** aesthetic:
+CarbonZen uses a **"Climate Mission Control"** aesthetic:
 
 ### Color Palette
 
@@ -1157,6 +1155,6 @@ All animations respect `prefers-reduced-motion` via the global CSS rule:
 
 ---
 
-*CarbonLedger — Personal Carbon Intelligence Platform, powered by a trained ML emission model and Gemini-based natural language understanding.*
+*CarbonZen — Personal Carbon Intelligence Platform, powered by a trained ML emission model and Gemini-based natural language understanding.*
 
 *Built with React + Vite + Supabase + scikit-learn · Deployed on Vercel*

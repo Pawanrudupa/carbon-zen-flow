@@ -26,7 +26,7 @@ const AppearanceSection = () => {
     <div className="space-y-6">
       <div>
         <h2 className="font-heading text-xl font-semibold text-foreground">Appearance</h2>
-        <p className="text-sm text-muted-foreground italic mt-1">CarbonLedger is designed for dark mode. Light mode coming soon.</p>
+        <p className="text-sm text-muted-foreground italic mt-1">CarbonZen is designed for dark mode. Light mode coming soon.</p>
       </div>
 
       {/* Theme cards */}

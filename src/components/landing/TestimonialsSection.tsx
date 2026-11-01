@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 
 const testimonials = [
-  { name: "Priya S.", location: "Bangalore", quote: "CarbonLedger made me realize my daily commute was 3x worse than I thought. Changed to train, saved 41 kg in a month.", reduction: "-41 kg", stars: 5 },
+  { name: "Priya S.", location: "Bangalore", quote: "CarbonZen made me realize my daily commute was 3x worse than I thought. Changed to train, saved 41 kg in a month.", reduction: "-41 kg", stars: 5 },
   { name: "Marco L.", location: "Berlin", quote: "The AI insights are mind-blowing. It caught a pattern I never would have noticed — my weekend cooking was my biggest emission source.", reduction: "-88 kg", stars: 5 },
   { name: "Aisha K.", location: "Nairobi", quote: "Finally, an app that doesn't guilt-trip me. The challenges keep me motivated and the data is beautiful.", reduction: "-62 kg", stars: 5 },
 ];

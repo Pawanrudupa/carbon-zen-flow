@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Leaf, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ const Login = () => {
         console.error("Email sign-in failed:", error);
         toast.error(error.message);
       } else {
-        navigate("/dashboard");
+        navigate(from, { replace: true });
       }
     } catch (err: any) {
       console.error("Email sign-in error or timeout:", err);
@@ -50,10 +52,14 @@ const Login = () => {
       sessionStorage.setItem("cz_oauth_in_progress", "true");
     }
     try {
+      const returnUrl = (location.state as any)?.from?.pathname 
+        ? `${window.location.origin}${(location.state as any).from.pathname}` 
+        : window.location.origin;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: returnUrl,
         },
       });
       if (error) {
@@ -83,7 +89,7 @@ const Login = () => {
             <Leaf className="text-primary" size={24} />
           </div>
           <h1 className="font-heading font-700 text-2xl text-foreground">Welcome back</h1>
-          <p className="text-muted-foreground text-sm">Sign in to CarbonLedger</p>
+          <p className="text-muted-foreground text-sm">Sign in to CarbonZen</p>
         </div>
 
         {/* Google button */}

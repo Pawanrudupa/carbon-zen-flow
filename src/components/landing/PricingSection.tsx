@@ -54,7 +54,7 @@ const PricingSection = () => {
           >
             <h3 className="font-heading font-700 text-xl text-foreground mb-2">Free</h3>
             <p className="font-mono text-3xl text-foreground font-bold mb-6">
-              ₹0<span className="text-sm text-muted-foreground font-normal">/mo</span>
+              $0<span className="text-sm text-muted-foreground font-normal">/mo</span>
             </p>
             <ul className="space-y-3">
               {free.map((f) => (
@@ -79,7 +79,7 @@ const PricingSection = () => {
             </span>
             <h3 className="font-heading font-700 text-xl text-foreground mb-2">Premium</h3>
             <p className="font-mono text-3xl text-foreground font-bold mb-6">
-              ₹{annual ? "249" : "299"}
+              ${annual ? "9" : "12"}
               <span className="text-sm text-muted-foreground font-normal">/mo</span>
             </p>
             <ul className="space-y-3">
