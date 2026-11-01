@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
-import { Search, ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ArrowDown, ArrowUp, Trash2, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface EntriesTableProps {
   entries: any[];
@@ -16,10 +19,12 @@ const categoryMeta: Record<string, { color: string; emoji: string }> = {
 const PER_PAGE = 10;
 
 const EntriesTable = ({ entries }: EntriesTableProps) => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
   const [sortBy, setSortBy] = useState("date");
   const [page, setPage] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const mappedEntries = useMemo(() => {
     const catAvgs: Record<string, { sum: number; count: number }> = {};
@@ -37,6 +42,7 @@ const EntriesTable = ({ entries }: EntriesTableProps) => {
       const d = new Date(e.logged_at);
       const dateStr = d.toISOString().split("T")[0];
       return {
+        id: e.id,
         date: dateStr,
         cat: cat,
         desc: e.description || "",
@@ -58,6 +64,23 @@ const EntriesTable = ({ entries }: EntriesTableProps) => {
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  const handleDeleteEntry = async (id: string) => {
+    if (!id || deletingId) return;
+    try {
+      setDeletingId(id);
+      const { error } = await supabase.from("entries").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Entry removed");
+      queryClient.invalidateQueries({ queryKey: ["analytics-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-entries"] });
+      window.dispatchEvent(new Event("entriesCleared"));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove entry");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="glass-card rounded-xl p-5 min-w-0 overflow-hidden">
@@ -103,73 +126,100 @@ const EntriesTable = ({ entries }: EntriesTableProps) => {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-primary/10">
-              {["Date", "Category", "Description", "CO₂ (kg)", "vs avg"].map((h) => (
-                <th key={h} className="text-left py-2 px-3 text-xs font-mono text-muted-foreground/70 uppercase tracking-wider font-medium">
+              {["Date", "Category", "Description", "CO₂ (kg)", "vs avg", ""].map((h, idx) => (
+                <th key={idx} className="text-left py-2 px-3 text-xs font-mono text-muted-foreground/70 uppercase tracking-wider font-medium">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {paged.map((e, i) => {
-              const diff = e.co2 - e.avg;
-              const isBelow = diff < 0;
-              const meta = categoryMeta[e.cat] || categoryMeta["Other"];
-              return (
-                <tr
-                  key={i}
-                  className="border-b border-primary/5 hover:bg-primary/5 transition-colors"
-                >
-                  <td className="py-2.5 px-3 font-mono text-xs text-muted-foreground">{e.date}</td>
-                  <td className="py-2.5 px-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs">
-                      <span>{meta.emoji}</span>
-                      <span className="font-mono" style={{ color: meta.color }}>{e.cat}</span>
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-xs text-foreground/70">{e.desc}</td>
-                  <td className="py-2.5 px-3 font-mono text-xs text-foreground">{e.co2.toFixed(1)}</td>
-                  <td className="py-2.5 px-3">
-                    <span className={`inline-flex items-center gap-0.5 font-mono text-xs ${isBelow ? "text-primary" : "text-destructive"}`}>
-                      {isBelow ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
-                      {Math.abs(diff).toFixed(1)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+            {paged.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-xs font-mono text-muted-foreground/60">
+                  No entries found matching criteria
+                </td>
+              </tr>
+            ) : (
+              paged.map((e) => {
+                const diff = e.co2 - e.avg;
+                const isBelow = diff < 0;
+                const meta = categoryMeta[e.cat] || categoryMeta["Other"];
+                return (
+                  <tr
+                    key={e.id || `${e.date}-${e.desc}`}
+                    className="border-b border-primary/5 hover:bg-primary/5 transition-colors group"
+                  >
+                    <td className="py-2.5 px-3 font-mono text-xs text-muted-foreground">{e.date}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="inline-flex items-center gap-1.5 text-xs">
+                        <span>{meta.emoji}</span>
+                        <span className="font-mono" style={{ color: meta.color }}>{e.cat}</span>
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-xs text-foreground/70">{e.desc}</td>
+                    <td className="py-2.5 px-3 font-mono text-xs text-foreground">{e.co2.toFixed(1)}</td>
+                    <td className="py-2.5 px-3">
+                      <span className={`inline-flex items-center gap-0.5 font-mono text-xs ${isBelow ? "text-primary" : "text-destructive"}`}>
+                        {isBelow ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
+                        {Math.abs(diff).toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {e.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEntry(e.id)}
+                          disabled={deletingId === e.id}
+                          className="text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded"
+                          title="Delete entry"
+                        >
+                          {deletingId === e.id ? (
+                            <Loader2 size={13} className="animate-spin text-destructive" />
+                          ) : (
+                            <Trash2 size={13} />
+                          )}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-1 mt-4">
-        <button
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={page === 0}
-          className="px-3 py-1.5 rounded-lg text-xs font-mono text-muted-foreground hover:bg-muted/30 disabled:opacity-30 transition-colors"
-        >
-          Previous
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 mt-4">
           <button
-            key={i}
-            onClick={() => setPage(i)}
-            className={`w-7 h-7 rounded-lg text-xs font-mono transition-all ${
-              page === i ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/30"
-            }`}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-3 py-1.5 rounded-lg text-xs font-mono text-muted-foreground hover:bg-muted/30 disabled:opacity-30 transition-colors"
           >
-            {i + 1}
+            Previous
           </button>
-        ))}
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-          disabled={page === totalPages - 1}
-          className="px-3 py-1.5 rounded-lg text-xs font-mono text-muted-foreground hover:bg-muted/30 disabled:opacity-30 transition-colors"
-        >
-          Next
-        </button>
-      </div>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`w-7 h-7 rounded-lg text-xs font-mono transition-all ${
+                page === i ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/30"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="px-3 py-1.5 rounded-lg text-xs font-mono text-muted-foreground hover:bg-muted/30 disabled:opacity-30 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
